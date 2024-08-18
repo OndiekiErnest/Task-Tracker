@@ -262,7 +262,7 @@ class InputPopup(QWidget):
         self.topic.child.setDisabled(True)
         self.topic.child.currentTextChanged.connect(self.enableSubmit)
 
-        self.comments = NamedPlainTextEdit("Describe the activity")
+        self.comments = NamedPlainTextEdit("Describe the activity/what you have learnt")
         self.comments.child.textChanged.connect(self.enableSubmit)
 
         self.submit = QPushButton("Add Log")
