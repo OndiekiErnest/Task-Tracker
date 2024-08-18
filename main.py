@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 from PyQt6.QtCore import QTimer
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 from PyQt6.QtGui import QIcon
+from humanize import naturaltime
 from gui import MainWindow
 from models import CommentsModel, TopicsModel
 from constants import APP_DB, APP_ICON, TIMEZONE
@@ -64,6 +65,7 @@ class Tracker:
         self.gui.setSettingsModel(self.topics_model)
 
         self.all_topics = self.getTopics()
+        print(self.all_topics)
         self.current_topic = None
 
         self.topics_model.dataChanged.connect(self.on_data_changed)
@@ -75,7 +77,7 @@ class Tracker:
         self.gui.databaseview.add_record.clicked.connect(self.showInputWin)
         self.gui.databaseview.delete_record.clicked.connect(self.deleteActivity)
         # settings
-        self.gui.settingsview.activity_adder.addbtn.clicked.connect(self.setTopic)
+        self.gui.settingsview.activity_adder.addbtn.clicked.connect(self.saveTopic)
         self.gui.settingsview.activity_adder.deletebtn.clicked.connect(self.removeTopic)
 
         self.tray_icon = QSystemTrayIcon(self.app_icon, self.gui)
@@ -124,6 +126,29 @@ class Tracker:
         topics_list.sort(key=lambda t: t.starts)
         return topics_list
 
+    def getCurrentTopics(self):
+        """calculate the currrent topics based on the current time"""
+        now = datetime.now(tz=TIMEZONE)
+        return [topic for topic in self.all_topics if topic.starts <= now <= topic.ends]
+
+    def setCurrentTopics(self):
+        """add current topics to the input window"""
+        tpcs = [t.title for t in self.getCurrentTopics()]
+        self.input_window.topic.addItems(tpcs)
+
+    def setCurrentTRange(self):
+        """set current time range on the tray menu"""
+        current_topics = self.getCurrentTopics()
+        if current_topics:
+            min_dt, max_dt = (
+                min((t.starts for t in current_topics)),
+                max((t.ends for t in current_topics)),
+            )
+            dsp = f"<b>{min_dt.strftime('%a, %H:%M')} - {max_dt.strftime('%a, %H:%M')}</b>"
+        else:
+            dsp = "<b>No task set</b>"
+        self.tray_menu.current_slot.setText(dsp)
+
     def showInputWin(self):
         """popup input window"""
         if self.input_window.isVisible():
@@ -163,8 +188,8 @@ class Tracker:
         self.comments_model.select()
         logger.info("Activity deleted from 'comments' table")
 
-    def setTopic(self):
-        """set topic details in settings"""
+    def saveTopic(self):
+        """set topic details in settings to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic = self.gui.settingsview.activity_adder.getTopic()
         start = self.gui.settingsview.activity_adder.getStart()
@@ -198,7 +223,13 @@ class Tracker:
 
     def showMessage(self):
         """show log reminder"""
-        self.tray_icon.showMessage()
+        tpcs = self.getCurrentTopics()
+        ending = max((t.ends for t in tpcs))
+        self.tray_icon.showMessage(
+            "Click this message. Log what you are working on.",
+            f"You have {len(tpcs)} tasks ending {naturaltime(ending)}",
+            msecs=10000,
+        )
 
     def toggleNotifications(self, disabled: bool):
         """show/stop notification messages"""
