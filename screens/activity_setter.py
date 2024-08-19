@@ -34,16 +34,14 @@ class ActivitySetter(QWidget):
         buttonslayout = QHBoxLayout()
         buttonslayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        self.activities_table = QTableView()
-        self.activities_table.setAlternatingRowColors(True)
-        self.activities_table.setSortingEnabled(True)
-        self.activities_table.horizontalHeader().setSectionResizeMode(
+        self.rtable = QTableView()
+        self.rtable.setAlternatingRowColors(True)
+        self.rtable.setSortingEnabled(True)
+        self.rtable.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
         )
-        self.activities_table.setSelectionBehavior(
-            QTableView.SelectionBehavior.SelectRows
-        )
-        self.activities_table.setWordWrap(True)
+        self.rtable.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        self.rtable.setWordWrap(True)
 
         self.topic_text = NamedLineEdit("Activity Topic")
         self.topic_text.child.textChanged.connect(self.enableSubmitBtn)
@@ -63,7 +61,7 @@ class ActivitySetter(QWidget):
         self.enabledtopic.setDisabled(True)
         self.enabledtopic.clicked.connect(self.enableDisableNotifs)
 
-        layout.addWidget(self.activities_table)
+        layout.addWidget(self.rtable)
         layout.addWidget(self.topic_text)
 
         datetimeslayout.addWidget(self.start_time)
@@ -82,6 +80,11 @@ class ActivitySetter(QWidget):
         """clear input fields"""
         self.topic_text.child.clear()
 
+    def disableDnCheck(self):
+        """disable delete and checkbox"""
+        self.deletebtn.setDisabled(True)
+        self.enabledtopic.setDisabled(True)
+
     def getTopic(self):
         return self.topic_text.child.text()
 
@@ -95,11 +98,16 @@ class ActivitySetter(QWidget):
         span = int(self.duration.child.text()) * TIME_UNITS[unit]
         return span
 
+    def sRows(self):
+        """return selected rows"""
+        return self.rtable.selectionModel().selectedRows()
+
     def enableDisableNotifs(self):
         """disable/enable topic from sending notifications"""
+        # TODO: make this handle multiple selections
         if self.current_row is not None:
             col = 5
-            model = self.activities_table.model()
+            model = self.rtable.model()
             # negate the old record
             checked = not bool(model.data(model.index(self.current_row, col)))
             if model.setData(model.index(self.current_row, col), int(checked)):
@@ -120,6 +128,7 @@ class ActivitySetter(QWidget):
 
     def setCheckState(self, index: QModelIndex):
         """check or uncheck topic based on database data"""
+        # TODO: make this handle multiple selections
         col = 5
         row = index.row()
         model = index.model()
@@ -140,24 +149,21 @@ class ActivitySetter(QWidget):
             self.addbtn.setDisabled(True)
 
     def enableBtns(self):
-        if indexes := self.activities_table.selectionModel().selectedRows():
+        if indexes := self.rtable.selectionModel().selectedRows():
             self.current_row = indexes[0].row()
             self.deletebtn.setEnabled(True)
             self.enabledtopic.setEnabled(True)
         else:
             self.current_row = None
-            self.deletebtn.setDisabled(True)
-            self.enabledtopic.setDisabled(True)
+            self.disableDnCheck()
 
     def setModel(self, model: TopicsModel):
         """set model to use"""
-        self.activities_table.setModel(model)
+        self.rtable.setModel(model)
 
-        self.activities_table.hideColumn(model.fieldIndex("id"))
-        self.activities_table.hideColumn(model.fieldIndex("timestamp"))
-        self.activities_table.hideColumn(model.fieldIndex("enabled"))
+        self.rtable.hideColumn(model.fieldIndex("id"))
+        self.rtable.hideColumn(model.fieldIndex("timestamp"))
+        self.rtable.hideColumn(model.fieldIndex("enabled"))
 
-        self.activities_table.selectionModel().selectionChanged.connect(self.enableBtns)
-        self.activities_table.selectionModel().currentRowChanged.connect(
-            self.setCheckState
-        )
+        self.rtable.selectionModel().selectionChanged.connect(self.enableBtns)
+        self.rtable.selectionModel().currentRowChanged.connect(self.setCheckState)
