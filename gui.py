@@ -13,17 +13,14 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSortFilterProxyModel
 from PyQt6.QtGui import QIcon
 from models import CommentsModel, TopicsModel
-from cwidgets import (
-    Line,
-    Splitter,
-    TimeUnits,
-    RecordsEditor,
-    RecordsTable,
-    DisableNotifs,
-    DatabaseMapper,
-    NamedLineEditV,
-)
-from activityscreen import ActivitySetter
+from customwidgets.frames import Line
+from customwidgets.comboboxes import TimeUnits
+from customwidgets.mappers import DatabaseMapper
+from customwidgets.splitters import Splitter
+from customwidgets.tableviews import RecordsTable
+from customwidgets.groupboxes import NamedLineEditV, DisableNotifs
+from screens.record_editor import RecordsEditor
+from screens.activity_setter import ActivitySetter
 from constants import APP_ICON
 
 

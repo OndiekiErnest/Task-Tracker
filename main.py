@@ -11,8 +11,8 @@ from humanize import naturaltime
 from gui import MainWindow
 from models import CommentsModel, TopicsModel
 from constants import APP_DB, APP_ICON, TIMEZONE
-from cmenus import TrayMenu
-from cwidgets import InputPopup
+from customwidgets.menus import TrayMenu
+from screens.log_input import InputPopup
 from datas import TopicData
 from qstyles import STYLE
 
@@ -47,6 +47,7 @@ class Tracker:
 
         self.tray_menu = TrayMenu()
         self.tray_menu.addlog.clicked.connect(self.showInputWin)
+        self.tray_menu.more.clicked.connect(self.gui.showMaximized)
 
         self.gui = MainWindow()
 
@@ -108,7 +109,6 @@ class Tracker:
                     case 3:
                         dt = datetime.now(tz=TIMEZONE)
                         hr, mins, secs = value.split(":")
-
                         topic_kw["starts"] = dt.replace(
                             hour=int(hr),
                             minute=int(mins),

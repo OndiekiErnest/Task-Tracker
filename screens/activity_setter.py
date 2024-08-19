@@ -1,4 +1,4 @@
-"""screen to add activity topic, start, and stop"""
+"""screen to add activity topic, start, and span"""
 
 import logging
 from PyQt6.QtWidgets import (
@@ -11,7 +11,8 @@ from PyQt6.QtWidgets import (
     QHeaderView,
 )
 from PyQt6.QtCore import Qt, QModelIndex
-from cwidgets import NamedTimeEdit, NamedLineEdit, NamedLineEditV, TimeUnits
+from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
+from customwidgets.comboboxes import TimeUnits
 from models import TopicsModel
 from constants import TIME_UNITS
 
