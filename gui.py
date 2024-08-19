@@ -122,6 +122,10 @@ class DatabaseWindow(QWidget):
         self.splitter.addWidget(self.tableview)
         self.splitter.addWidget(self.model_editor)
 
+    def sRows(self):
+        """return selected rows"""
+        return self.tableview.selectionModel().selectedRows()
+
     def setModel(self, model: CommentsModel):
         """set database model"""
         logger.info(f"Model set to '{model}'")

@@ -45,10 +45,6 @@ class Tracker:
         else:
             logger.error("SQLite did not open")
 
-        self.tray_menu = TrayMenu()
-        self.tray_menu.addlog.clicked.connect(self.showInputWin)
-        self.tray_menu.more.clicked.connect(self.gui.showMaximized)
-
         self.gui = MainWindow()
 
         self.input_window = InputPopup()
@@ -66,8 +62,6 @@ class Tracker:
         self.gui.setSettingsModel(self.topics_model)
 
         self.all_topics = self.getTopics()
-        print(self.all_topics)
-        self.current_topic = None
 
         self.topics_model.dataChanged.connect(self.on_data_changed)
         self.topics_model.rowsInserted.connect(self.on_rows_inserted)
@@ -80,6 +74,10 @@ class Tracker:
         # settings
         self.gui.settingsview.activity_adder.addbtn.clicked.connect(self.saveTopic)
         self.gui.settingsview.activity_adder.deletebtn.clicked.connect(self.removeTopic)
+
+        self.tray_menu = TrayMenu()
+        self.tray_menu.addlog.clicked.connect(self.showInputWin)
+        self.tray_menu.more.clicked.connect(self.gui.showMaximized)
 
         self.tray_icon = QSystemTrayIcon(self.app_icon, self.gui)
         self.tray_icon.setToolTip("TLog - Time Tracker")
@@ -182,11 +180,15 @@ class Tracker:
                 f"DB error adding comments: {self.query.lastError().driverText()}"
             )
 
-    def deleteActivity(self, index):
+    def deleteActivity(self):
         """delete activity record from database"""
-        self.comments_model.deleteRowFromTable(index.row())
+        rows = self.gui.databaseview.sRows()
+        for index in reversed(rows):
+            row = index.row()
+            self.comments_model.deleteRowFromTable(row)
+            logger.info(f"Activity at {row} deleted from 'comments' table")
+        # apply changes
         self.comments_model.select()
-        logger.info("Activity deleted from 'comments' table")
 
     def saveTopic(self):
         """set topic details in settings to database"""
@@ -215,11 +217,16 @@ class Tracker:
                 f"DB error setting topic: {self.query.lastError().driverText()}"
             )
 
-    def removeTopic(self, index):
+    def removeTopic(self):
         """delete topic details in settings"""
-        self.topics_model.deleteRowFromTable(index.row())
+        rows = self.gui.settingsview.activity_adder.sRows()
+        for index in reversed(rows):
+            row = index.row()
+            self.topics_model.deleteRowFromTable(row)
+            logger.info(f"Topic at {row} deleted from 'topics' table")
+        # apply changes
         self.topics_model.select()
-        logger.info("Topic deleted from 'topics' table")
+        self.gui.settingsview.activity_adder.disableDnCheck()
 
     def showMessage(self):
         """show log reminder"""

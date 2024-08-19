@@ -16,7 +16,7 @@ COMMENTS_HEADERS = {
 TOPICS_HEADERS = {
     "topic": "Topic Title",
     "start": "Activity Start (daily)",
-    "span": "Span (in seconds)",
+    "span": "Span (in minutes)",
 }
 
 
