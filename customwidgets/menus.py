@@ -27,7 +27,7 @@ class TrayMenu(QMenu):
         labellayout = QVBoxLayout(labelwidget)
 
         # 1500 - 1700 hrs
-        self.current_slot = QLabel("<b>No task set</b>")
+        self.current_slot = QLabel("<b>No task set for this hour</b>")
         self.current_slot.setAlignment(Qt.AlignmentFlag.AlignCenter)
         labellayout.addWidget(self.current_slot)
 

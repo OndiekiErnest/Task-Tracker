@@ -5,6 +5,14 @@ from PyQt6.QtCore import Qt
 from customwidgets.groupboxes import NamedCombobox, NamedPlainTextEdit
 
 
+placeholder = """
+An example:
+- The lessons you have learnt
+- The goals you have achieved
+- The problems you have solved
+- The challenges you're facing
+"""
+
 class InputPopup(QWidget):
     """log form widget"""
 
@@ -22,10 +30,10 @@ class InputPopup(QWidget):
 
         # form widgets
         self.topic = NamedCombobox("Current Topic")
-        self.topic.child.setDisabled(True)
         self.topic.child.currentTextChanged.connect(self.enableSubmit)
 
-        self.comments = NamedPlainTextEdit("Describe the activity/what you have learnt")
+        self.comments = NamedPlainTextEdit("Describe the activity")
+        self.comments.child.setPlaceholderText(placeholder)
         self.comments.child.textChanged.connect(self.enableSubmit)
 
         self.submit = QPushButton("Add Log")
@@ -48,7 +56,10 @@ class InputPopup(QWidget):
 
     def enableSubmit(self, txt=None):
         """enable/disable submit button"""
-        topic, comments = self.topic.child.text(), self.comments.child.toPlainText()
+        topic, comments = (
+            self.topic.child.currentText(),
+            self.comments.child.toPlainText(),
+        )
         if all((topic, comments)):
             self.submit.setEnabled(True)
         else:
