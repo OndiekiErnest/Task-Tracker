@@ -21,4 +21,13 @@ APP_ICON = os.path.join(ICONS_DIR, "appicon_large.png")
 
 APP_DB = os.path.join(DB_DIR, "app.sqlite")
 
+APPSETTINGS_FILE = os.path.join(APP_DIR, "cfg.json")
+
 TIME_UNITS = {"hours": 60, "minutes": 1}
+
+DEFAULT_SETTINGS = {
+    "notify_after": 30,
+    "notify_units": "minutes",
+    "disable_saturday": False,
+    "disable_sunday": False,
+}
