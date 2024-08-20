@@ -11,3 +11,16 @@ class TimeUnits(QComboBox):
         super().__init__(*args, **kwargs)
 
         self.addItems(TIME_UNITS.keys())
+
+
+class TopicsCombobox(QComboBox):
+    """drop down for the topics"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def setText(self, text: str):
+        self.setCurrentText(text)
+
+    def text(self):
+        return self.currentText()
