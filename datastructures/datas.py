@@ -16,3 +16,12 @@ class TopicData:
 
     def __post_init__(self):
         self.ends = self.starts + timedelta(minutes=self.span)
+
+
+@dataclass(frozen=True)
+class Key:
+    """singleton key"""
+
+    obj: object
+    args: tuple
+    kwargs: frozenset
