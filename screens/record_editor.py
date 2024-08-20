@@ -1,7 +1,10 @@
 """custom QWidget with widgets to be used in QDataWidgetMapper"""
 
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
-from customwidgets.groupboxes import NamedSpinbox, NamedDatetimeEdit, NamedPlainTextEdit
+from customwidgets.groupboxes import (
+    NamedPlainTextEdit,
+    NamedCombobox,
+)
 
 
 class RecordsEditor(QWidget):
@@ -16,17 +19,10 @@ class RecordsEditor(QWidget):
 
         buttonslayout = QHBoxLayout()
 
-        self.id_edit = NamedSpinbox("Comment ID")
-
-        # create mapping widgets
-        self.datetime_edit = NamedDatetimeEdit("Date Added")
-
-        self.topic_edit = NamedPlainTextEdit("Topic Title")
+        self.topic_edit = NamedCombobox("Topic Title")
 
         self.comment_edit = NamedPlainTextEdit("Comments")
 
-        layout.addWidget(self.id_edit)
-        layout.addWidget(self.datetime_edit)
         layout.addWidget(self.topic_edit)
         layout.addWidget(self.comment_edit)
 
@@ -44,3 +40,12 @@ class RecordsEditor(QWidget):
         buttonslayout.addWidget(self.cancel_btn)
         # add buttons at the bottom
         layout.addLayout(buttonslayout)
+
+    def addTopics(self, topics: list):
+        """add topics to the topic"""
+        self.topic_edit.child.clear()
+        self.topic_edit.addItems(topics)
+
+    def clear(self):
+        """clear fields"""
+        self.comment_edit.child.clear()
