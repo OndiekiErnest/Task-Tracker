@@ -1,12 +1,11 @@
 """custom QGroupBox classes"""
 
+import logging
 from PyQt6.QtWidgets import (
     QGroupBox,
     QLineEdit,
     QSpinBox,
-    QComboBox,
     QPlainTextEdit,
-    QDateTimeEdit,
     QTimeEdit,
     QCheckBox,
     QVBoxLayout,
@@ -14,6 +13,11 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtGui import QRegularExpressionValidator
+from customwidgets.comboboxes import TopicsCombobox
+from datastructures.settings import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 class NamedItem(QGroupBox):
@@ -42,13 +46,13 @@ class NamedCombobox(NamedItem):
 
     def __init__(self, *args, **kwargs):
 
-        self.child = QComboBox()
+        self.child = TopicsCombobox()
 
         super().__init__(*args, **kwargs)
 
-    def addItems(self, items):
+    def addItems(self, topics):
         self.child.clear()
-        self.child.addItems(items)
+        self.child.addItems((t.title for t in topics))
 
     def setCurrentTopic(self, title):
         self.child.setCurrentText(title)
@@ -62,19 +66,6 @@ class NamedSpinbox(NamedItem):
         self.child = QSpinBox()
         # read only
         self.child.setDisabled(True)
-
-        super().__init__(*args, **kwargs)
-
-
-class NamedDatetimeEdit(NamedItem):
-    """QDateTimeEdit in a QGroupBox widget"""
-
-    def __init__(self, *args, **kwargs):
-
-        self.child = QDateTimeEdit()
-        # for consistency, match the format used in the database
-        self.child.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
-        self.child.setCalendarPopup(True)
 
         super().__init__(*args, **kwargs)
 
@@ -131,9 +122,23 @@ class DisableNotifs(QGroupBox):
         mainlayout = QHBoxLayout(self)
         # widgets
         self.disable_all = QCheckBox("Until restart")
+
         self.disable_saturday = QCheckBox("On Saturdays")
+        self.disable_saturday.setChecked(settings["disable_saturday"])
+        self.disable_saturday.toggled.connect(self.onCheckSat)
+
         self.disable_sunday = QCheckBox("On Sundays")
+        self.disable_sunday.setChecked(settings["disable_sunday"])
+        self.disable_sunday.toggled.connect(self.onCheckSun)
 
         mainlayout.addWidget(self.disable_all)
         mainlayout.addWidget(self.disable_saturday)
         mainlayout.addWidget(self.disable_sunday)
+
+    def onCheckSat(self, disabled: bool):
+        settings["disable_saturday"] = disabled
+        logger.info(f"Saturday disabled: {disabled}")
+
+    def onCheckSun(self, disabled: bool):
+        settings["disable_sunday"] = disabled
+        logger.info(f"Sunday disabled: {disabled}")
