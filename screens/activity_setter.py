@@ -2,7 +2,7 @@
 
 import logging
 from PyQt6.QtWidgets import (
-    QWidget,
+    QGroupBox,
     QHBoxLayout,
     QVBoxLayout,
     QPushButton,
@@ -20,19 +20,25 @@ from constants import TIME_UNITS
 logger = logging.getLogger(__name__)
 
 
-class ActivitySetter(QWidget):
+class ActivitySetter(QGroupBox):
     """widget for setting new activity"""
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__("Activities", **kwargs)
 
         self.current_row = None
 
         layout = QVBoxLayout(self)
 
+        toplayout = QHBoxLayout()
+        toplayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        toplayout.setSpacing(30)
+        layout.addLayout(toplayout)
+
         datetimeslayout = QHBoxLayout()
-        buttonslayout = QHBoxLayout()
-        buttonslayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        newactivity_group = QGroupBox("Add New Activity")
+        grouplayout = QVBoxLayout(newactivity_group)
 
         self.rtable = QTableView()
         self.rtable.setAlternatingRowColors(True)
@@ -48,7 +54,7 @@ class ActivitySetter(QWidget):
 
         self.start_time = NamedTimeEdit("Activity Start Time")
 
-        self.duration = NamedLineEditV("Activity Duration")
+        self.duration = NamedLineEditV("Activity Span")
         self.duration.child.textChanged.connect(self.enableSubmitBtn)
         self.duration_unit = TimeUnits()
 
@@ -62,19 +68,20 @@ class ActivitySetter(QWidget):
         self.enabledtopic.clicked.connect(self.enableDisableNotifs)
 
         layout.addWidget(self.rtable)
-        layout.addWidget(self.topic_text)
+        grouplayout.addWidget(self.topic_text)
 
         datetimeslayout.addWidget(self.start_time)
         datetimeslayout.addWidget(self.duration)
         datetimeslayout.addWidget(self.duration_unit)
 
-        layout.addLayout(datetimeslayout)
+        grouplayout.addLayout(datetimeslayout)
 
-        buttonslayout.addWidget(self.addbtn)
-        buttonslayout.addWidget(self.deletebtn)
-        buttonslayout.addWidget(self.enabledtopic)
+        grouplayout.addWidget(self.addbtn, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        layout.addLayout(buttonslayout)
+        toplayout.addWidget(self.deletebtn)
+        toplayout.addWidget(self.enabledtopic)
+
+        layout.addWidget(newactivity_group)
 
     def clearInputs(self):
         """clear input fields"""
