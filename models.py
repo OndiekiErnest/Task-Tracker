@@ -1,7 +1,7 @@
 """PyQt6 models"""
 
 import logging
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSortFilterProxyModel
 from PyQt6.QtSql import QSqlQuery, QSqlTableModel
 
 
@@ -94,3 +94,13 @@ class TopicsModel(QSqlTableModel):
             self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
         # select
         self.select()
+
+
+class SearchModel(QSortFilterProxyModel):
+    """proxy model for searching/filtering"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setFilterKeyColumn(-1)  # all columns
+        self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
