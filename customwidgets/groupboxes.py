@@ -76,7 +76,7 @@ class NamedTimeEdit(NamedItem):
     def __init__(self, *args, **kwargs):
 
         self.child = QTimeEdit()
-        # for consistency, match the format used in the database
+        # 24 hour system
         self.child.setDisplayFormat("HH:mm")
 
         super().__init__(*args, **kwargs)
@@ -109,6 +109,7 @@ class NamedLineEditV(NamedLineEdit):
         super().__init__(*args, **kwargs)
 
         validator = QRegularExpressionValidator(self)
+
         validator.setRegularExpression(QRegularExpression("[0-9]+"))
         self.child.setValidator(validator)
 
