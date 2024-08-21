@@ -29,6 +29,7 @@ class SettingsWindow(QScrollArea):
 
         layout = QVBoxLayout(swidget)
         layout.setContentsMargins(6, 20, 6, 20)
+        layout.setSpacing(15)
         layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.setWidget(swidget)
 
