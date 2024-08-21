@@ -99,6 +99,9 @@ class Tracker:
         self.tray_icon.messageClicked.connect(self.showInputWin)
         self.tray_icon.show()
 
+        # set things on start
+        self.onTimeout()
+
     def _updateTimerInterval(self):
         """update notification interval"""
         after = settings["notify_after"] * TIME_UNITS[settings["notify_units"]]
@@ -223,6 +226,7 @@ class Tracker:
         logger.info(f"Activity at {row} deleted from 'comments' table")
         # apply changes
         self.comments_model.select()
+        self.gui.databaseview.mapper.toPrevious()
 
     def saveTopic(self):
         """set topic details in settings to database"""
@@ -245,6 +249,7 @@ class Tracker:
         if success:
             self.topics_model.select()
             self.gui.settingsview.activity_adder.clearInputs()
+            self.gui.settingsview.activity_adder.addSpan()
             logger.info(f"Set topic '{topic}'")
         else:
             logger.error(
