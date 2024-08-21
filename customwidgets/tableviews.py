@@ -14,6 +14,7 @@ class RecordsTable(QTableView):
         self.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
         self.verticalHeader().setVisible(False)
         self.setShowGrid(False)
+        self.setAlternatingRowColors(True)
         self.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         # resize all columns to fit their contents
         self.horizontalHeader().setSectionResizeMode(
