@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QTableView,
     QHeaderView,
 )
-from PyQt6.QtCore import Qt, QModelIndex
+from PyQt6.QtCore import Qt, QModelIndex, QTime
 from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
 from customwidgets.comboboxes import TimeUnits
 from models import TopicsModel
@@ -29,6 +29,7 @@ class ActivitySetter(QGroupBox):
         self.current_row = None
 
         layout = QVBoxLayout(self)
+        layout.setSpacing(10)
 
         toplayout = QHBoxLayout()
         toplayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -100,10 +101,19 @@ class ActivitySetter(QGroupBox):
         return self.start_time.child.time().toString()
 
     def getSpan(self):
-        # total seconds
+        """span in minutes"""
         unit = self.duration_unit.currentText()
         span = int(self.duration.child.text()) * TIME_UNITS[unit]
         return span
+
+    def addSpan(self):
+        """add span to current set time"""
+        unit = self.duration_unit.currentText()
+        # span in mins
+        span = int(self.duration.child.text()) * TIME_UNITS[unit]
+
+        time = self.start_time.child.time().addSecs(span * 60)
+        self.start_time.child.setTime(time)
 
     def sRows(self):
         """return selected rows"""
@@ -127,11 +137,6 @@ class ActivitySetter(QGroupBox):
                     )
             else:
                 logger.error(f"Topic dis/enable setData: {model.lastError().text()}")
-            # # get the QSqlRecord for the specified row
-            # record = model.record(self.current_row)
-            # # extract data from the QSqlRecord
-            # data_tuple = tuple(record.value(i) for i in range(record.count()))
-            # print(data_tuple)
 
     def setCheckState(self, index: QModelIndex):
         """check or uncheck topic based on database data"""
@@ -150,7 +155,7 @@ class ActivitySetter(QGroupBox):
             self.getStart(),
             self.duration.child.text(),
         )
-        if all((topic, start, span)):
+        if all((topic, start, span)) and int(span):  # span != 0
             self.addbtn.setEnabled(True)
         else:
             self.addbtn.setDisabled(True)
