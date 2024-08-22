@@ -33,6 +33,9 @@ class Tracker:
 
     def __init__(self):
 
+        self._today = datetime.now(tz=TIMEZONE).weekday()
+        """day of the week where Mon=0 and Sun=6"""
+
         self.app_icon = QIcon(APP_ICON)
 
         self.db = QSqlDatabase.addDatabase("QSQLITE")
@@ -60,7 +63,7 @@ class Tracker:
 
         self.notification_timer = QTimer(self.gui)
         self.notification_timer.timeout.connect(self.onTimeout)
-        self._updateTimerInterval()
+        self._setNotificationsInterval()
         self.notification_timer.start()
 
         # models
@@ -68,7 +71,7 @@ class Tracker:
         self.topics_model = TopicsModel(self.db)
 
         self.all_topics = self.getTopics()
-        self.onTopicsChange(self.all_topics)
+        self.onTopicsChange()
 
         self.gui.setCommentsModel(self.comments_model)
         self.gui.setSettingsModel(self.topics_model)
@@ -76,16 +79,17 @@ class Tracker:
         self.topics_model.modelReset.connect(self.on_data_changed)
 
         # database viewer
-        self.gui.databaseview.add_record.clicked.connect(self.showInputWin)
-        self.gui.databaseview.model_editor.delete_btn.clicked.connect(
+        self.gui.commentsview.add_record.clicked.connect(self.showInputWin)
+        self.gui.commentsview.model_editor.delete_btn.clicked.connect(
             self.deleteActivity
         )
         # settings
-        self.gui.settingsview.activity_adder.addbtn.clicked.connect(self.saveTopic)
-        self.gui.settingsview.activity_adder.deletebtn.clicked.connect(self.removeTopic)
+        self.gui.settingsview.topic_adder.addbtn.clicked.connect(self.saveTopic)
+        self.gui.settingsview.topic_adder.deletebtn.clicked.connect(self.deleteTopic)
 
         self.tray_menu = TrayMenu()
-        self.tray_menu.addlog.clicked.connect(self.showInputWin)
+        self.tray_menu.addlog.clicked.connect(self.input_window.showNormal)
+        self.tray_menu.addtopic_action.triggered.connect(self.showAddTopic)
         self.tray_menu.more.clicked.connect(self.gui.showMaximized)
 
         self.tray_menu.disableactn.toggled.connect(self.onTrayDisable)
@@ -96,30 +100,58 @@ class Tracker:
         self.tray_icon = QSystemTrayIcon(self.app_icon, self.gui)
         self.tray_icon.setToolTip("TLog - Time Tracker")
         self.tray_icon.setContextMenu(self.tray_menu)
-        self.tray_icon.messageClicked.connect(self.showInputWin)
+        self.tray_icon.messageClicked.connect(self.input_window.showNormal)
         self.tray_icon.show()
 
         # set things on start
-        self.onTimeout()
+        # check if is weekend and if any notifications have been disabled
+        # show notifications right away if any
+        self.onStartup()
 
-    def _updateTimerInterval(self):
+    def _setNotificationsInterval(self):
         """update notification interval"""
         after = settings["notify_after"] * TIME_UNITS[settings["notify_units"]]
-        logger.info(f"Interval changed to: {after} minutes")
+        logger.info(f"Interval set to: {after} minutes")
         # convert to millisecs
         self.notification_timer.setInterval(after * 60000)
 
+    def _checkWeekend(self):
+        """if weekend; enable/disable notifications"""
+        if self._today == 5:
+            logger.info("It is Saturday")
+            if self.disable_sat:
+                self.toggleNotifications(True)
+            else:
+                self.toggleNotifications(False)
+
+        elif self._today == 6:
+            logger.info("It is Sunday")
+            if self.disable_sun:
+                self.toggleNotifications(True)
+            else:
+                self.toggleNotifications(False)
+        else:
+            logger.info("It is a weekday")
+
+    def onStartup(self):
+        """get things running right away"""
+        self._checkWeekend()
+        self.onTimeout()
+
     def onSettingsChange(self, key: str):
         """handle settings change"""
+        logger.info(f"Settings '{key}' changed")
         match key:
             case "notify_after":
-                self._updateTimerInterval()
+                self._setNotificationsInterval()
             case "notify_units":
-                self._updateTimerInterval()
+                self._setNotificationsInterval()
             case "disable_saturday":
                 self.disable_sat = settings["disable_saturday"]
+                self._checkWeekend()
             case "disable_sunday":
                 self.disable_sun = settings["disable_sunday"]
+                self._checkWeekend()
             case _:
                 pass
 
@@ -179,11 +211,18 @@ class Tracker:
                 max((t.ends for t in current_topics)),
             )
             dsp = f"<b>{min_dt.strftime('%a, %H:%M')} - {max_dt.strftime('%a, %H:%M')}</b>"
+            end = f"  (ends about {naturaltime(max_dt)})"
         else:
             dsp = "<b>No task set for this hour</b>"
+            end = ""
 
-        self.input_window.prompt.setText(dsp)
+        self.input_window.prompt.setText(f"{dsp}{end}")
         self.tray_menu.current_slot.setText(dsp)
+
+    def showAddTopic(self):
+        """show the settings window for adding new topic"""
+        self.gui.tabwidget.setCurrentIndex(1)
+        self.gui.showMaximized()
 
     def showInputWin(self):
         """popup input window"""
@@ -220,20 +259,20 @@ class Tracker:
 
     def deleteActivity(self):
         """delete activity record from database"""
-        row = self.gui.databaseview.mapper.currentIndex()
-        self.gui.databaseview.model_editor.clear()
+        row = self.gui.commentsview.mapper.currentIndex()
+        self.gui.commentsview.model_editor.clear()
         self.comments_model.deleteRowFromTable(row)
         logger.info(f"Activity at {row} deleted from 'comments' table")
         # apply changes
         self.comments_model.select()
-        self.gui.databaseview.mapper.toPrevious()
+        self.gui.commentsview.mapper.toPrevious()
 
     def saveTopic(self):
         """set topic details in settings to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
-        topic = self.gui.settingsview.activity_adder.getTopic()
-        start = self.gui.settingsview.activity_adder.getStart()
-        span = self.gui.settingsview.activity_adder.getSpan()
+        topic = self.gui.settingsview.topic_adder.getTopic()
+        start = self.gui.settingsview.topic_adder.getStart()
+        span = self.gui.settingsview.topic_adder.getSpan()
 
         self.query.prepare(
             """
@@ -248,27 +287,31 @@ class Tracker:
         success = self.query.exec()
         if success:
             self.topics_model.select()
-            self.gui.settingsview.activity_adder.clearInputs()
-            self.gui.settingsview.activity_adder.addSpan()
+            self.gui.settingsview.topic_adder.clearInputs()
+            self.gui.settingsview.topic_adder.addSpan()
             logger.info(f"Set topic '{topic}'")
         else:
             logger.error(
                 f"DB error setting topic: {self.query.lastError().driverText()}"
             )
 
-    def removeTopic(self):
+    def deleteTopic(self):
         """delete topic details in settings"""
-        rows = self.gui.settingsview.activity_adder.sRows()
+        rows = self.gui.settingsview.topic_adder.sRows()
         for index in reversed(rows):
             row = index.row()
             self.topics_model.deleteRowFromTable(row)
             logger.info(f"Topic at {row} deleted from 'topics' table")
         # apply changes
         self.topics_model.select()
-        self.gui.settingsview.activity_adder.disableDnCheck()
+        self.gui.settingsview.topic_adder.disableDnCheck()
 
     def onTimeout(self):
-        """when notification timer has timed out"""
+        """
+        set current time range,
+        set current topic,
+        show message
+        """
         topics = self.getCurrentTopics()
 
         self.setCurrentTRange(topics)
@@ -304,10 +347,10 @@ class Tracker:
     def on_data_changed(self):
         logger.info("Data changed in 'topics' model")
         self.all_topics = self.getTopics()
-        self.onTopicsChange(self.all_topics)
+        self.onTopicsChange()
 
-    def onTopicsChange(self, topics: list):
-        self.gui.databaseview.model_editor.addTopics(topics)
+    def onTopicsChange(self):
+        self.gui.commentsview.model_editor.addTopics(self.all_topics)
 
 
 if __name__ == "__main__":
@@ -320,7 +363,8 @@ if __name__ == "__main__":
         main = Tracker()
         main.tray_menu.quit.clicked.connect(app.quit)
         main.gui.showMaximized()
+        exit_code = app.exec()
     finally:
         settings.save()
 
-    sys.exit(app.exec())
+    sys.exit(exit_code)
