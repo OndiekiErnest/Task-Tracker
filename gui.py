@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIcon
 from models import CommentsModel, TopicsModel
 from screens.settings import SettingsWindow
-from screens.activities import DatabaseWindow
+from screens.comments import CommentsWindow
 from constants import APP_ICON
 
 
@@ -28,7 +28,7 @@ class MainWindow(QWidget):
         layout = QVBoxLayout(self)
 
         # widgets
-        self.databaseview = DatabaseWindow()
+        self.commentsview = CommentsWindow()
 
         self.settingsview = SettingsWindow()
 
@@ -40,12 +40,12 @@ class MainWindow(QWidget):
         layout.addWidget(self.tabwidget)
 
         # add views to tab widget
-        self.tabwidget.addTab(self.databaseview, "Activities")
+        self.tabwidget.addTab(self.commentsview, "Activities")
         self.tabwidget.addTab(self.settingsview, "Settings")
 
     def setCommentsModel(self, model: CommentsModel):
         """set database model"""
-        self.databaseview.setModel(model)
+        self.commentsview.setModel(model)
 
     def setSettingsModel(self, model: TopicsModel):
         """set model for topics"""
