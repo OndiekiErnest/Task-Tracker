@@ -1,9 +1,12 @@
 """messages data model"""
 
+import logging
 from PyQt6.QtCore import QObject, pyqtSignal
 from datastructures.qdicts import QDict
 from utils import saveJSON, readJSON, Singleton
 from constants import DEFAULT_SETTINGS, APPSETTINGS_FILE
+
+logger = logging.getLogger(__name__)
 
 
 class BaseSettingsSignals(QObject):
@@ -102,8 +105,9 @@ class AppSettings(BaseSettings):
 
     def save(self):
         """save to filename"""
-
-        saveJSON(self.filename, self.data.raw())
+        data = self.data.raw()
+        logger.info(f"Saving settings: {data}")
+        saveJSON(self.filename, data)
 
 
 settings = AppSettings()
