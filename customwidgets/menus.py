@@ -38,6 +38,13 @@ class TrayMenu(QMenu):
         self.addSeparator()
 
         # pause/resume timer
+        self.addtopic_action = QAction("Add Topic")
+        """add topic QAction"""
+        self.addAction(self.addtopic_action)
+
+        self.addSeparator()
+
+        # pause/resume timer
         self.disableactn = QAction("Disable notifications")
         self.disableactn.setCheckable(True)
         self.disableactn.setChecked(False)
