@@ -3,7 +3,7 @@
 import logging
 from PyQt6.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt
-from screens.activity_setter import ActivitySetter
+from screens.topic_setter import TopicSetter
 from customwidgets.frames import Line
 from customwidgets.groupboxes import NamedLineEditV, DisableNotifs
 from customwidgets.comboboxes import TimeUnits
@@ -34,8 +34,8 @@ class SettingsWindow(QScrollArea):
         self.setWidget(swidget)
 
         # widgets
-        # set activity topic, start, stop
-        self.activity_adder = ActivitySetter()
+        # set topic title, start, stop
+        self.topic_adder = TopicSetter()
         # remind after:
         remindlayout = QHBoxLayout()
 
@@ -52,7 +52,7 @@ class SettingsWindow(QScrollArea):
         # disable notifications
         self.disable_notifications = DisableNotifs("Disable notifications")
 
-        layout.addWidget(self.activity_adder)
+        layout.addWidget(self.topic_adder)
         layout.addWidget(Line())
         layout.addLayout(remindlayout)
         layout.addWidget(self.disable_notifications)
@@ -60,7 +60,7 @@ class SettingsWindow(QScrollArea):
     def setModel(self, model: TopicsModel):
         """set model for topics"""
         logger.info(f"Model set to '{model}'")
-        self.activity_adder.setModel(model)
+        self.topic_adder.setModel(model)
 
     def remindAfterEdited(self):
         """when remind after has been edited"""
