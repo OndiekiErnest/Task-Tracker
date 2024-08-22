@@ -15,7 +15,7 @@ COMMENTS_HEADERS = {
 
 TOPICS_HEADERS = {
     "topic": "Topic Title",
-    "start": "Activity Start (daily)",
+    "start": "Topic Start (daily)",
     "span": "Span (in minutes)",
 }
 
@@ -52,6 +52,8 @@ class CommentsModel(QSqlTableModel):
         for k, v in COMMENTS_HEADERS.items():
             idx = self.fieldIndex(k)
             self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+        # sort before select
+        self.setSort(self.fieldIndex("timestamp"), Qt.SortOrder.DescendingOrder)
         # select
         self.select()
 
@@ -92,6 +94,8 @@ class TopicsModel(QSqlTableModel):
         for k, v in TOPICS_HEADERS.items():
             idx = self.fieldIndex(k)
             self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+        # sort before select
+        self.setSort(self.fieldIndex("start"), Qt.SortOrder.AscendingOrder)
         # select
         self.select()
 
