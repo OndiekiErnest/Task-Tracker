@@ -1,4 +1,4 @@
-"""widget for showing activity records"""
+"""widget for showing comment records"""
 
 import logging
 from PyQt6.QtWidgets import (
@@ -18,7 +18,7 @@ from screens.record_editor import RecordsEditor
 logger = logging.getLogger(__name__)
 
 
-class DatabaseWindow(QWidget):
+class CommentsWindow(QWidget):
     """activity comments viewer window"""
 
     def __init__(self, **kwargs):
