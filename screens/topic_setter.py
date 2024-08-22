@@ -1,4 +1,4 @@
-"""screen to add activity topic, start, and span"""
+"""screen to add topic title, start, and span"""
 
 import logging
 from PyQt6.QtWidgets import (
@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QTableView,
     QHeaderView,
 )
-from PyQt6.QtCore import Qt, QModelIndex, QTime
+from PyQt6.QtCore import Qt, QModelIndex
 from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
 from customwidgets.comboboxes import TimeUnits
 from models import TopicsModel
@@ -20,26 +20,25 @@ from constants import TIME_UNITS
 logger = logging.getLogger(__name__)
 
 
-class ActivitySetter(QGroupBox):
-    """widget for setting new activity"""
+class TopicSetter(QGroupBox):
+    """widget for setting new topic"""
 
     def __init__(self, **kwargs):
-        super().__init__("Activities", **kwargs)
+        super().__init__("Topics", **kwargs)
 
         self.current_row = None
 
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 
-        toplayout = QHBoxLayout()
-        toplayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        toplayout.setSpacing(30)
-        layout.addLayout(toplayout)
+        btnslayout = QHBoxLayout()
+        btnslayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        btnslayout.setSpacing(30)
 
         datetimeslayout = QHBoxLayout()
 
-        newactivity_group = QGroupBox("Add New Activity")
-        grouplayout = QVBoxLayout(newactivity_group)
+        newtopic_group = QGroupBox("Add New Topic")
+        grouplayout = QVBoxLayout(newtopic_group)
 
         self.rtable = QTableView()
         self.rtable.setAlternatingRowColors(True)
@@ -50,12 +49,12 @@ class ActivitySetter(QGroupBox):
         self.rtable.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.rtable.setWordWrap(True)
 
-        self.topic_text = NamedLineEdit("Activity Topic")
+        self.topic_text = NamedLineEdit("Topic Title")
         self.topic_text.child.textChanged.connect(self.enableSubmitBtn)
 
-        self.start_time = NamedTimeEdit("Activity Start Time")
+        self.start_time = NamedTimeEdit("Topic Start Time")
 
-        self.duration = NamedLineEditV("Activity Span")
+        self.duration = NamedLineEditV("Topic Span")
         self.duration.child.textChanged.connect(self.enableSubmitBtn)
         self.duration_unit = TimeUnits()
 
@@ -68,7 +67,6 @@ class ActivitySetter(QGroupBox):
         self.enabledtopic.setDisabled(True)
         self.enabledtopic.clicked.connect(self.enableDisableNotifs)
 
-        layout.addWidget(self.rtable)
         grouplayout.addWidget(self.topic_text)
 
         datetimeslayout.addWidget(self.start_time)
@@ -79,10 +77,12 @@ class ActivitySetter(QGroupBox):
 
         grouplayout.addWidget(self.addbtn, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        toplayout.addWidget(self.deletebtn)
-        toplayout.addWidget(self.enabledtopic)
+        btnslayout.addWidget(self.deletebtn)
+        btnslayout.addWidget(self.enabledtopic)
 
-        layout.addWidget(newactivity_group)
+        layout.addWidget(newtopic_group)
+        layout.addWidget(self.rtable)
+        layout.addLayout(btnslayout)
 
     def clearInputs(self):
         """clear input fields"""
