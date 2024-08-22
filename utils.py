@@ -30,10 +30,10 @@ def hidePath(path: str):
     FILE_ATTRIBUTE_HIDDEN = 2
     attrs = kernel32.GetFileAttributesW(path)
     if attrs == INVALID_FILE_ATTRIBUTES:
-        raise ctypes.WinError(ctypes.get_last_error())
+        logger.error(f"hidePath() error: {ctypes.get_last_error()}")
     attrs |= FILE_ATTRIBUTE_HIDDEN
     if not kernel32.SetFileAttributesW(path, attrs):
-        raise ctypes.WinError(ctypes.get_last_error())
+        logger.error(f"hidePath() error: {ctypes.get_last_error()}")
 
 
 def readJSON(filename: str, default=None):
