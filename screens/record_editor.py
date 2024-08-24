@@ -1,10 +1,12 @@
 """custom QWidget with widgets to be used in QDataWidgetMapper"""
 
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
+from PyQt6.QtGui import QIcon
 from customwidgets.groupboxes import (
     NamedPlainTextEdit,
     NamedCombobox,
 )
+from constants import UNDO_ICON, NEXT_ICON, PREVIOUS_ICON, DELETE_ICON, SUBMIT_ICON
 
 
 class RecordsEditor(QWidget):
@@ -28,16 +30,21 @@ class RecordsEditor(QWidget):
 
         # buttons
         self.delete_btn = QPushButton("Delete")
-        self.prev_btn = QPushButton("<<")
+        self.delete_btn.setIcon(QIcon(DELETE_ICON))
+        self.prev_btn = QPushButton()
+        self.prev_btn.setIcon(QIcon(PREVIOUS_ICON))
         self.save_btn = QPushButton("Update")
-        self.next_btn = QPushButton(">>")
-        self.cancel_btn = QPushButton("Cancel")
+        self.save_btn.setIcon(QIcon(SUBMIT_ICON))
+        self.next_btn = QPushButton()
+        self.next_btn.setIcon(QIcon(NEXT_ICON))
+        self.undo_btn = QPushButton("Undo")
+        self.undo_btn.setIcon(QIcon(UNDO_ICON))
 
         buttonslayout.addWidget(self.delete_btn)
         buttonslayout.addWidget(self.prev_btn)
         buttonslayout.addWidget(self.save_btn)
         buttonslayout.addWidget(self.next_btn)
-        buttonslayout.addWidget(self.cancel_btn)
+        buttonslayout.addWidget(self.undo_btn)
         # add buttons at the bottom
         layout.addLayout(buttonslayout)
 

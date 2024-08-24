@@ -11,10 +11,11 @@ from PyQt6.QtWidgets import (
     QHeaderView,
 )
 from PyQt6.QtCore import Qt, QModelIndex
+from PyQt6.QtGui import QIcon
 from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
 from customwidgets.comboboxes import TimeUnits
 from models import TopicsModel
-from constants import TIME_UNITS
+from constants import TIME_UNITS, SUBMIT_ICON, DELETE_ICON
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class TopicSetter(QGroupBox):
 
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
+        layout.setContentsMargins(8, 20, 8, 8)
 
         btnslayout = QHBoxLayout()
         btnslayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -39,12 +41,15 @@ class TopicSetter(QGroupBox):
 
         newtopic_group = QGroupBox("Add New Topic")
         grouplayout = QVBoxLayout(newtopic_group)
+        grouplayout.setSpacing(10)
+        grouplayout.setContentsMargins(8, 20, 8, 8)
 
         self.rtable = QTableView()
+        self.rtable.setMinimumHeight(350)
         self.rtable.setAlternatingRowColors(True)
         self.rtable.setSortingEnabled(True)
         self.rtable.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
+            QHeaderView.ResizeMode.ResizeToContents
         )
         self.rtable.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self.rtable.setWordWrap(True)
@@ -59,8 +64,11 @@ class TopicSetter(QGroupBox):
         self.duration_unit = TimeUnits()
 
         self.addbtn = QPushButton("Submit")
+        self.addbtn.setIcon(QIcon(SUBMIT_ICON))
         self.addbtn.setDisabled(True)
+
         self.deletebtn = QPushButton("Delete")
+        self.deletebtn.setIcon(QIcon(DELETE_ICON))
         self.deletebtn.setDisabled(True)
 
         self.enabledtopic = QCheckBox("Enable Notifications")

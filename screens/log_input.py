@@ -1,8 +1,10 @@
 """custom QWidget with widgets for typing and saving user logs"""
 
 from PyQt6.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout
+from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 from customwidgets.groupboxes import NamedCombobox, NamedPlainTextEdit
+from constants import ADDCOMMENT_ICON
 
 
 placeholder = """
@@ -37,6 +39,8 @@ class InputPopup(QWidget):
         self.comments.child.textChanged.connect(self.enableSubmit)
 
         self.submit = QPushButton("Add Log")
+        self.submit.setIcon(QIcon(ADDCOMMENT_ICON))
+        self.submit.setMinimumWidth(60)
         self.submit.setDisabled(True)
 
         layout.addWidget(self.topic)
@@ -50,7 +54,7 @@ class InputPopup(QWidget):
         ww, wh = self.width(), self.height()
         x, y = xw - ww, xh - wh
 
-        self.setGeometry(x - 10, y - 40, ww, wh)  # y - window titlebar
+        self.setGeometry(x - 10, y - 80, ww, wh)  # y - window titlebar
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 

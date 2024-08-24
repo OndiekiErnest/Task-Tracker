@@ -9,11 +9,13 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 from models import CommentsModel, SearchModel
 from customwidgets.mappers import DatabaseMapper
 from customwidgets.splitters import Splitter
 from customwidgets.tableviews import RecordsTable
 from screens.record_editor import RecordsEditor
+from constants import EDIT_ICON, ADDTOPIC_ICON
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +39,13 @@ class CommentsWindow(QWidget):
         self.model_editor.hide()
 
         self.toggle_edit = QPushButton("Edit")
+        self.toggle_edit.setIcon(QIcon(EDIT_ICON))
         self.toggle_edit.setCheckable(True)
         # on toggled signal
         self.toggle_edit.toggled.connect(self.showhide_editor)
 
         self.add_record = QPushButton("New")
+        self.add_record.setIcon(QIcon(ADDTOPIC_ICON))
 
         self.proxy_model = SearchModel()
 
@@ -58,7 +62,7 @@ class CommentsWindow(QWidget):
         self.model_editor.prev_btn.clicked.connect(self.editPrevious)
         self.model_editor.save_btn.clicked.connect(self.saveEdits)
         self.model_editor.next_btn.clicked.connect(self.editNext)
-        self.model_editor.cancel_btn.clicked.connect(self.discardEdits)
+        self.model_editor.undo_btn.clicked.connect(self.discardEdits)
 
         self.mapper.setModel(self.proxy_model)
         self.mapper.addMapping(self.model_editor.topic_edit.child, 2)

@@ -10,7 +10,7 @@ from PyQt6.QtGui import QIcon
 from models import CommentsModel, TopicsModel
 from screens.settings import SettingsWindow
 from screens.comments import CommentsWindow
-from constants import APP_ICON
+from constants import APP_ICON, ACTIVITIES_ICON, SETTINGS_ICON
 
 
 logger = logging.getLogger(__name__)
@@ -40,8 +40,18 @@ class MainWindow(QWidget):
         layout.addWidget(self.tabwidget)
 
         # add views to tab widget
-        self.tabwidget.addTab(self.commentsview, "Activities")
-        self.tabwidget.addTab(self.settingsview, "Settings")
+        self.tabwidget.addTab(self.commentsview, QIcon(ACTIVITIES_ICON), "Activities")
+        self.tabwidget.addTab(self.settingsview, QIcon(SETTINGS_ICON), "Settings")
+
+    def switchToActivities(self):
+        """make activities the active tab"""
+        index = self.tabwidget.indexOf(self.commentsview)
+        self.tabwidget.setCurrentIndex(index)
+
+    def switchToSettings(self):
+        """make settings the active tab"""
+        index = self.tabwidget.indexOf(self.settingsview)
+        self.tabwidget.setCurrentIndex(index)
 
     def setCommentsModel(self, model: CommentsModel):
         """set database model"""

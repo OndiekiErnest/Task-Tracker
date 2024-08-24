@@ -90,7 +90,7 @@ class Tracker:
         self.tray_menu = TrayMenu()
         self.tray_menu.addlog.clicked.connect(self.input_window.showNormal)
         self.tray_menu.addtopic_action.triggered.connect(self.showAddTopic)
-        self.tray_menu.more.clicked.connect(self.gui.showMaximized)
+        self.tray_menu.more.clicked.connect(self.showActivities)
 
         self.tray_menu.disableactn.toggled.connect(self.onTrayDisable)
         self.gui.settingsview.disable_notifications.disable_all.toggled.connect(
@@ -219,9 +219,14 @@ class Tracker:
         self.input_window.prompt.setText(f"{dsp}{end}")
         self.tray_menu.current_slot.setText(dsp)
 
+    def showActivities(self):
+        """show the activities window"""
+        self.gui.switchToActivities()
+        self.gui.showMaximized()
+
     def showAddTopic(self):
         """show the settings window for adding new topic"""
-        self.gui.tabwidget.setCurrentIndex(1)
+        self.gui.switchToSettings()
         self.gui.showMaximized()
 
     def showInputWin(self):
@@ -320,7 +325,7 @@ class Tracker:
 
     def showMessage(self, current_topics: list):
         """show log reminder"""
-        if current_topics:
+        if current_topics and self.notification_timer.isActive():
             tp_len = len(current_topics)
             end = naturaltime(max((t.ends for t in current_topics)))
 
