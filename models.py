@@ -1,15 +1,20 @@
 """PyQt6 models"""
 
 import logging
-from PyQt6.QtCore import Qt, QSortFilterProxyModel
-from PyQt6.QtSql import QSqlQuery, QSqlTableModel
+from PyQt6.QtCore import Qt
+from PyQt6.QtSql import (
+    QSqlRelation,
+    QSqlQuery,
+    QSqlTableModel,
+    QSqlRelationalTableModel,
+)
 
 
 logger = logging.getLogger(__name__)
 
 COMMENTS_HEADERS = {
     "timestamp": "Date Added",
-    "topic": "Topic Title",
+    "topic_id": "Topic Title",
     "comment": "Comments",
 }
 
@@ -20,7 +25,7 @@ TOPICS_HEADERS = {
 }
 
 
-class CommentsModel(QSqlTableModel):
+class CommentsModel(QSqlRelationalTableModel):
     """table model class that reads and writes comments to a local file database"""
 
     def __init__(self, db, **kwargs):
@@ -32,9 +37,10 @@ class CommentsModel(QSqlTableModel):
             """
             CREATE TABLE IF NOT EXISTS comments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                topic TEXT NOT NULL,
-                comment TEXT NOT NULL
+                timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
+                topic_id INTEGER NOT NULL,
+                comment TEXT NOT NULL,
+                FOREIGN KEY(topic_id) REFERENCES topics(id) ON DELETE CASCADE
             )
             """
         )
@@ -43,6 +49,10 @@ class CommentsModel(QSqlTableModel):
         if created:
             # set table name
             self.setTable("comments")
+            self.setRelation(
+                self.fieldIndex("topic_id"),
+                QSqlRelation("topics", "id", "topic"),
+            )
             logger.info("Table created and set to 'comments'")
         else:
             logger.error(
@@ -52,6 +62,8 @@ class CommentsModel(QSqlTableModel):
         for k, v in COMMENTS_HEADERS.items():
             idx = self.fieldIndex(k)
             self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+        # edit strategy
+        self.setEditStrategy(QSqlRelationalTableModel.EditStrategy.OnFieldChange)
         # sort before select
         self.setSort(self.fieldIndex("timestamp"), Qt.SortOrder.DescendingOrder)
         # select
@@ -72,7 +84,7 @@ class TopicsModel(QSqlTableModel):
             """
             CREATE TABLE IF NOT EXISTS topics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
                 topic TEXT NOT NULL UNIQUE,
                 start TEXT NOT NULL,
                 span INTEGER NOT NULL,
@@ -94,17 +106,9 @@ class TopicsModel(QSqlTableModel):
         for k, v in TOPICS_HEADERS.items():
             idx = self.fieldIndex(k)
             self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+        # edit strategy
+        self.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
         # sort before select
         self.setSort(self.fieldIndex("start"), Qt.SortOrder.AscendingOrder)
         # select
         self.select()
-
-
-class SearchModel(QSortFilterProxyModel):
-    """proxy model for searching/filtering"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setFilterKeyColumn(-1)  # all columns
-        self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
