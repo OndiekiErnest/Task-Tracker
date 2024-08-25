@@ -1,5 +1,6 @@
 """The C in MVC"""
 
+import re
 import sys
 import logging
 from datetime import datetime
@@ -12,7 +13,7 @@ from gui import MainWindow
 from models import CommentsModel, TopicsModel
 from constants import APP_DB, APP_ICON, TIMEZONE, TIME_UNITS
 from customwidgets.menus import TrayMenu
-from screens.log_input import InputPopup
+from screens.comment_input import InputPopup
 from datastructures.datas import TopicData
 from datastructures.settings import settings
 from qstyles import STYLE
@@ -57,7 +58,8 @@ class Tracker:
         self.input_window = InputPopup()
         self.input_window.setWindowIcon(self.app_icon)
         # link buttons
-        self.input_window.submit.clicked.connect(self.logActivity)
+        self.input_window.submit.clicked.connect(self.logComment)
+        self.input_window.prompt.linkActivated.connect(self.showAddTopic)
 
         self.notification_timer = QTimer(self.gui)
         self.notification_timer.timeout.connect(self.onTimeout)
@@ -223,8 +225,8 @@ class Tracker:
             dsp = f"<b>{min_dt.strftime('%a, %H:%M')} - {max_dt.strftime('%a, %H:%M')}</b>"
             end = f"  (ends about {naturaltime(max_dt)})"
         else:
-            dsp = "<b>No task set for this hour</b>"
-            end = ""
+            dsp = "<b>No topic set for this hour</b>"
+            end = '  <a href="add_topic">Add</a>'
 
         self.input_window.prompt.setText(f"{dsp}{end}")
         self.tray_menu.current_slot.setText(dsp)
@@ -234,8 +236,9 @@ class Tracker:
         self.gui.switchToActivities()
         self.gui.showMaximized()
 
-    def showAddTopic(self):
+    def showAddTopic(self, *args):
         """show the settings window for adding new topic"""
+        logger.info(f"showAddTopic called with: {args}")
         self.gui.switchToSettings()
         self.gui.showMaximized()
 
@@ -246,8 +249,8 @@ class Tracker:
         else:
             self.input_window.showNormal()
 
-    def logActivity(self):
-        """add activity record to database"""
+    def logComment(self):
+        """add comment record to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic_title = self.input_window.topic.child.currentText()
         topic_id = self._topicIDByTitle(topic_title)
@@ -272,8 +275,8 @@ class Tracker:
         else:
             logger.error(f"DB error adding comments: {query.lastError().driverText()}")
 
-    def deleteActivity(self):
-        """delete activity record from database"""
+    def deleteComment(self):
+        """delete comment record from database"""
         selected = self.gui.commentsview.sRows()
         if selected:
             for index in selected:
@@ -327,9 +330,9 @@ class Tracker:
 
     def onSearch(self, text: str):
         """search and filter"""
-        ss = text.strip().lower()
+        ss = re.sub(r"[\W_]+", "", text.strip().lower())
         if ss:
-            filter_query = f"comment='%{ss}%'"
+            filter_query = f'comments.comment LIKE "%{ss}%"'
             self.comments_model.setFilter(filter_query)
         else:
             self.comments_model.setFilter("")  # remove the filter to show all records
@@ -353,8 +356,8 @@ class Tracker:
             end = naturaltime(max((t.ends for t in current_topics)))
 
             self.tray_icon.showMessage(
-                "How is the task going?",
-                f"Log your achievements. \n{tp_len} {'tasks' if tp_len > 1 else 'task'} ending {end}",
+                "How is the topic going?",
+                f"Log your achievements. \n{tp_len} {'topics' if tp_len > 1 else 'topic'} ending {end}",
                 self.app_icon,
                 msecs=10000,
             )
