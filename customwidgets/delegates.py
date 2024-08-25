@@ -112,7 +112,6 @@ class TopicsDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
         if column == self.time_col:
-            print("Creating QTimeEdit widget")
             # Use QTimeEdit
             editor = QTimeEdit(parent)
             editor.setDisplayFormat("HH:mm:ss")  # set time format
