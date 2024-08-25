@@ -42,8 +42,6 @@ class Tracker:
         self.db.setDatabaseName(APP_DB)
         self.db.open()
 
-        self.query = QSqlQuery(self.db)
-
         self.disable_sat = settings["disable_saturday"]
         self.disable_sun = settings["disable_sunday"]
 
@@ -71,21 +69,21 @@ class Tracker:
         self.topics_model = TopicsModel(self.db)
 
         self.all_topics = self.getTopics()
-        self.onTopicsChange()
 
         self.gui.setCommentsModel(self.comments_model)
         self.gui.setSettingsModel(self.topics_model)
 
         self.topics_model.modelReset.connect(self.on_data_changed)
+        self.topics_model.dataChanged.connect(self.on_data_changed)
+        # self.topics_model.layoutChanged.connect(self.on_data_changed)
+        self.topics_model.rowsRemoved.connect(self.on_data_changed)
 
         # database viewer
         self.gui.commentsview.add_record.clicked.connect(self.showInputWin)
-        self.gui.commentsview.model_editor.delete_btn.clicked.connect(
-            self.deleteActivity
-        )
         # settings
         self.gui.settingsview.topic_adder.addbtn.clicked.connect(self.saveTopic)
         self.gui.settingsview.topic_adder.deletebtn.clicked.connect(self.deleteTopic)
+        self.gui.commentsview.search_input.textChanged.connect(self.onSearch)
 
         self.tray_menu = TrayMenu()
         self.tray_menu.addlog.clicked.connect(self.input_window.showNormal)
@@ -107,6 +105,12 @@ class Tracker:
         # check if is weekend and if any notifications have been disabled
         # show notifications right away if any
         self.onStartup()
+
+    def _topicIDByTitle(self, title: str):
+        """return topic id"""
+        for topic in self.all_topics:
+            if topic.title == title:
+                return topic.topic_id
 
     def _setNotificationsInterval(self):
         """update notification interval"""
@@ -171,6 +175,12 @@ class Tracker:
             for c in range(record.count()):
                 value = record.value(c)
                 match c:
+                    case 0:
+                        topic_kw["topic_id"] = value
+                    case 1:
+                        topic_kw["created"] = datetime.strptime(
+                            value, "%Y-%m-%d %H:%M:%S"
+                        )
                     case 2:
                         # title
                         topic_kw["title"] = value
@@ -239,38 +249,37 @@ class Tracker:
     def logActivity(self):
         """add activity record to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
-        topic = self.input_window.topic.child.currentText()
+        topic_title = self.input_window.topic.child.currentText()
+        topic_id = self._topicIDByTitle(topic_title)
         comments = self.input_window.comments.child.toPlainText()
 
-        self.query.prepare(
+        query = QSqlQuery(self.db)
+        query.prepare(
             """
-            INSERT INTO comments (timestamp, topic, comment)
+            INSERT INTO comments (timestamp, topic_id, comment)
             VALUES (?, ?, ?)
             """
         )
-        self.query.addBindValue(time_now)
-        self.query.addBindValue(topic)
-        self.query.addBindValue(comments)
-        success = self.query.exec()
+        query.addBindValue(time_now)
+        query.addBindValue(topic_id)
+        query.addBindValue(comments)
+        success = query.exec()
         if success:
             self.comments_model.select()
             self.input_window.comments.child.clear()
             self.input_window.hide()
-            logger.info(f"Added comment related to '{topic}'")
+            logger.info(f"Added comment related to '{topic_id} - {topic_title}'")
         else:
-            logger.error(
-                f"DB error adding comments: {self.query.lastError().driverText()}"
-            )
+            logger.error(f"DB error adding comments: {query.lastError().driverText()}")
 
     def deleteActivity(self):
         """delete activity record from database"""
-        row = self.gui.commentsview.mapper.currentIndex()
-        self.gui.commentsview.model_editor.clear()
+        # TODO: get selected rows
+        row = 0
         self.comments_model.deleteRowFromTable(row)
         logger.info(f"Activity at {row} deleted from 'comments' table")
         # apply changes
         self.comments_model.select()
-        self.gui.commentsview.mapper.toPrevious()
 
     def saveTopic(self):
         """set topic details in settings to database"""
@@ -279,37 +288,49 @@ class Tracker:
         start = self.gui.settingsview.topic_adder.getStart()
         span = self.gui.settingsview.topic_adder.getSpan()
 
-        self.query.prepare(
+        query = QSqlQuery(self.db)
+        query.prepare(
             """
             INSERT INTO topics (timestamp, topic, start, span)
             VALUES (?, ?, ?, ?)
             """
         )
-        self.query.addBindValue(time_now)
-        self.query.addBindValue(topic)
-        self.query.addBindValue(start)
-        self.query.addBindValue(span)
-        success = self.query.exec()
+        query.addBindValue(time_now)
+        query.addBindValue(topic)
+        query.addBindValue(start)
+        query.addBindValue(span)
+        success = query.exec()
         if success:
             self.topics_model.select()
             self.gui.settingsview.topic_adder.clearInputs()
             self.gui.settingsview.topic_adder.addSpan()
             logger.info(f"Set topic '{topic}'")
         else:
-            logger.error(
-                f"DB error setting topic: {self.query.lastError().driverText()}"
-            )
+            logger.error(f"DB error setting topic: {query.lastError().driverText()}")
 
     def deleteTopic(self):
         """delete topic details in settings"""
-        rows = self.gui.settingsview.topic_adder.sRows()
-        for index in reversed(rows):
-            row = index.row()
-            self.topics_model.deleteRowFromTable(row)
-            logger.info(f"Topic at {row} deleted from 'topics' table")
-        # apply changes
-        self.topics_model.select()
-        self.gui.settingsview.topic_adder.disableDnCheck()
+        if self.gui.ask(
+            "All logs related to selected topics will be deleted.\nAre you sure you want to delete?"
+        ):
+            rows = self.gui.settingsview.topic_adder.sRows()
+            for index in reversed(rows):
+                row = index.row()
+                self.topics_model.deleteRowFromTable(row)
+                logger.info(f"Topic at {row} deleted from 'topics' table")
+            # apply changes
+            self.topics_model.select()
+            self.comments_model.select()
+            self.gui.settingsview.topic_adder.disableDnCheck()
+
+    def onSearch(self, text: str):
+        """search and filter"""
+        ss = text.strip().lower()
+        if ss:
+            filter_query = f"comment='%{ss}%'"
+            self.comments_model.setFilter(filter_query)
+        else:
+            self.comments_model.setFilter("")  # remove the filter to show all records
 
     def onTimeout(self):
         """
@@ -349,13 +370,15 @@ class Tracker:
             self.notification_timer.start()
             logger.info("Notifications enabled")
 
-    def on_data_changed(self):
+    def on_data_changed(self, *args, **kwargs):
         logger.info("Data changed in 'topics' model")
         self.all_topics = self.getTopics()
-        self.onTopicsChange()
 
-    def onTopicsChange(self):
-        self.gui.commentsview.model_editor.addTopics(self.all_topics)
+        topics = self.getCurrentTopics()
+        self.setCurrentTRange(topics)
+        self.setCurrentTopics(topics)
+
+        self.comments_model.select()
 
 
 if __name__ == "__main__":
