@@ -76,7 +76,16 @@ class CommentsDelegate(QSqlRelationalDelegate):
     def updateEditorGeometry(self, editor, option, index: QModelIndex):
         column = index.column()
 
-        if column == self.comment_col:
+        if column == self.datetime_col:
+            rect = QRect(
+                option.rect.left(),
+                option.rect.top(),
+                max(230, option.rect.width()),
+                option.rect.height(),
+            )
+            editor.setGeometry(rect)
+
+        elif column == self.comment_col:
             rect = QRect(
                 option.rect.left(),
                 option.rect.top(),
