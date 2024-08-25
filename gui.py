@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QTabWidget,
+    QMessageBox,
 )
 from PyQt6.QtGui import QIcon
 from models import CommentsModel, TopicsModel
@@ -60,6 +61,25 @@ class MainWindow(QWidget):
     def setSettingsModel(self, model: TopicsModel):
         """set model for topics"""
         self.settingsview.setModel(model)
+
+    def ask(self, quiz: str):
+        if (
+            QMessageBox.question(
+                self,
+                "Action Confirmation",
+                quiz,
+            )
+            == QMessageBox.StandardButton.Ok
+        ):
+            return True
+        return False
+
+    def inform(self, info: str):
+        QMessageBox.information(
+            self,
+            "Action Feedback",
+            info,
+        )
 
     def closeEvent(self, event):
         self.hide()
