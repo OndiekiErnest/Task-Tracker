@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 class TopicData:
     """topic attrs"""
 
+    topic_id: int
+    created: datetime
     title: str
     starts: datetime
     span: int
