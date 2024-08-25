@@ -3,7 +3,7 @@
 from PyQt6.QtWidgets import QTableView, QHeaderView
 
 
-class RecordsTable(QTableView):
+class CommentsTable(QTableView):
     """table to display records"""
 
     def __init__(self, *args, **kwargs):
@@ -11,7 +11,6 @@ class RecordsTable(QTableView):
 
         self.setMinimumWidth(600)
 
-        self.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
         self.verticalHeader().setVisible(False)
         self.setShowGrid(False)
         self.setAlternatingRowColors(True)
