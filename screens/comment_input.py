@@ -26,6 +26,7 @@ class InputPopup(QWidget):
 
         # what are you doing right now; What are you up to?
         self.prompt = QLabel("<b>What are you up to?</b>")
+        self.prompt.setOpenExternalLinks(False)
         self.prompt.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(self.prompt)
