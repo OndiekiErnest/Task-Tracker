@@ -274,12 +274,14 @@ class Tracker:
 
     def deleteActivity(self):
         """delete activity record from database"""
-        # TODO: get selected rows
-        row = 0
-        self.comments_model.deleteRowFromTable(row)
-        logger.info(f"Activity at {row} deleted from 'comments' table")
-        # apply changes
-        self.comments_model.select()
+        selected = self.gui.commentsview.sRows()
+        if selected:
+            for index in selected:
+                row = index.row()
+                self.comments_model.deleteRowFromTable(row)
+                logger.info(f"Activity at {row} deleted from 'comments' table")
+                # apply changes
+            self.comments_model.select()
 
     def saveTopic(self):
         """set topic details in settings to database"""
