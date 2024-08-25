@@ -43,10 +43,10 @@ class CommentsModel(QSqlTableModel):
         if created:
             # set table name
             self.setTable("comments")
-            logger.info("Table set to 'comments'")
+            logger.info("Table created and set to 'comments'")
         else:
             logger.error(
-                f"Table was not set to 'comments':\n{query.lastError().driverText()}"
+                f"Table 'comments' was not created:\n{query.lastError().driverText()}"
             )
         # change header titles
         for k, v in COMMENTS_HEADERS.items():
@@ -73,7 +73,7 @@ class TopicsModel(QSqlTableModel):
             CREATE TABLE IF NOT EXISTS topics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                topic TEXT NOT NULL,
+                topic TEXT NOT NULL UNIQUE,
                 start TEXT NOT NULL,
                 span INTEGER NOT NULL,
                 enabled INTEGER NOT NULL DEFAULT 1
@@ -85,10 +85,10 @@ class TopicsModel(QSqlTableModel):
         if created:
             # set table name
             self.setTable("topics")
-            logger.info("Table set to 'topics'")
+            logger.info("Table created and set to 'topics'")
         else:
             logger.error(
-                f"Table was not set to 'topics':\n{query.lastError().driverText()}"
+                f"Table 'topics' was not created:\n{query.lastError().driverText()}"
             )
         # change header titles
         for k, v in TOPICS_HEADERS.items():
