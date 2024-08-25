@@ -49,6 +49,9 @@ class CommentsWindow(QWidget):
 
         layout.addWidget(self.tableview)
 
+    def sRows(self):
+        return self.tableview.selectionModel().selectedRows()
+
     def setModel(self, model: CommentsModel):
         """set database model"""
         logger.info(f"Model set to '{model}'")
