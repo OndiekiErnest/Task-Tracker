@@ -14,6 +14,7 @@ from PyQt6.QtCore import Qt, QModelIndex
 from PyQt6.QtGui import QIcon
 from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
 from customwidgets.comboboxes import TimeUnits
+from customwidgets.delegates import TopicsDelegate
 from models import TopicsModel
 from constants import TIME_UNITS, SUBMIT_ICON, DELETE_ICON
 
@@ -184,6 +185,10 @@ class TopicSetter(QGroupBox):
         self.rtable.hideColumn(model.fieldIndex("id"))
         self.rtable.hideColumn(model.fieldIndex("timestamp"))
         self.rtable.hideColumn(model.fieldIndex("enabled"))
+
+        self.rtable.setItemDelegate(
+            TopicsDelegate(model.fieldIndex("start"), model.fieldIndex("span")),
+        )
 
         self.rtable.selectionModel().selectionChanged.connect(self.enableBtns)
         self.rtable.selectionModel().currentRowChanged.connect(self.setCheckState)
