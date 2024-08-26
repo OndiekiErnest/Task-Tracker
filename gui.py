@@ -63,16 +63,14 @@ class MainWindow(QWidget):
         self.settingsview.setModel(model)
 
     def ask(self, quiz: str):
-        if (
+        return (
             QMessageBox.question(
                 self,
                 "Action Confirmation",
                 quiz,
             )
-            == QMessageBox.StandardButton.Ok
-        ):
-            return True
-        return False
+            == QMessageBox.StandardButton.Yes
+        )
 
     def inform(self, info: str):
         QMessageBox.information(
