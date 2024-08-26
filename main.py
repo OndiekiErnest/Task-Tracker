@@ -36,6 +36,7 @@ class Tracker:
 
         self._today = datetime.now(tz=TIMEZONE).weekday()
         """day of the week where Mon=0 and Sun=6"""
+        self.show_notifications = True
 
         self.app_icon = QIcon(APP_ICON)
 
@@ -288,6 +289,7 @@ class Tracker:
 
     def saveTopic(self):
         """set topic details in settings to database"""
+        # TODO: make changes reflect in the comments model
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic = self.gui.settingsview.topic_adder.getTopic()
         start = self.gui.settingsview.topic_adder.getStart()
@@ -305,8 +307,10 @@ class Tracker:
         query.addBindValue(start)
         query.addBindValue(span)
         success = query.exec()
+
         if success:
             self.topics_model.select()
+            self.comments_model.select()
             self.gui.settingsview.topic_adder.clearInputs()
             self.gui.settingsview.topic_adder.addSpan()
             logger.info(f"Set topic '{topic}'")
@@ -315,10 +319,13 @@ class Tracker:
 
     def deleteTopic(self):
         """delete topic details in settings"""
+        # TODO: make changes reflect in the comments model
+        rows = self.gui.settingsview.topic_adder.sRows()
+        logger.info(f"Total to be deleted: {len(rows)}")
         if self.gui.ask(
             "All logs related to selected topics will be deleted.\nAre you sure you want to delete?"
         ):
-            rows = self.gui.settingsview.topic_adder.sRows()
+
             for index in reversed(rows):
                 row = index.row()
                 self.topics_model.deleteRowFromTable(row)
@@ -330,6 +337,7 @@ class Tracker:
 
     def onSearch(self, text: str):
         """search and filter"""
+        # TODO: Improve search
         ss = re.sub(r"[\W_]+", "", text.strip().lower())
         if ss:
             filter_query = f'comments.comment LIKE "%{ss}%"'
@@ -344,6 +352,8 @@ class Tracker:
         show message
         """
         topics = self.getCurrentTopics()
+        disabled = not all((t.enabled for t in topics))
+        self.tray_menu.disableactn.setChecked(disabled)
 
         self.setCurrentTRange(topics)
         self.setCurrentTopics(topics)
@@ -351,7 +361,7 @@ class Tracker:
 
     def showMessage(self, current_topics: list):
         """show log reminder"""
-        if current_topics and self.notification_timer.isActive():
+        if current_topics and self.show_notifications:
             tp_len = len(current_topics)
             end = naturaltime(max((t.ends for t in current_topics)))
 
@@ -369,10 +379,10 @@ class Tracker:
     def toggleNotifications(self, disabled: bool):
         """show/stop notification messages"""
         if disabled:
-            self.notification_timer.stop()
+            self.show_notifications = False
             logger.info("Notifications disabled")
         else:
-            self.notification_timer.start()
+            self.show_notifications = True
             logger.info("Notifications enabled")
 
     def on_data_changed(self, *args, **kwargs):
