@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QTableView,
     QHeaderView,
 )
-from PyQt6.QtCore import Qt, QModelIndex
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
 from customwidgets.comboboxes import TimeUnits
@@ -28,7 +28,7 @@ class TopicSetter(QGroupBox):
     def __init__(self, **kwargs):
         super().__init__("Topics", **kwargs)
 
-        self.current_row = None
+        self.selected_rows = []
 
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
@@ -110,7 +110,7 @@ class TopicSetter(QGroupBox):
         return self.start_time.child.time().toString()
 
     def getSpan(self):
-        """span in minutes"""
+        """span in unit"""
         unit = self.duration_unit.currentText()
         span = int(self.duration.child.text()) * TIME_UNITS[unit]
         return span
@@ -126,36 +126,39 @@ class TopicSetter(QGroupBox):
 
     def sRows(self):
         """return selected rows"""
-        return self.rtable.selectionModel().selectedRows()
+        return self.selected_rows
 
     def enableDisableNotifs(self):
         """disable/enable topic from sending notifications"""
-        # TODO: make this handle multiple selections
-        if self.current_row is not None:
-            col = 5
+        if self.selected_rows:
+            checked = self.enabledtopic.isChecked()
             model = self.rtable.model()
-            # negate the old record
-            checked = not bool(model.data(model.index(self.current_row, col)))
-            if model.setData(model.index(self.current_row, col), int(checked)):
-                if model.submitAll():
-                    model.select()
-                    logger.info(f"Topic was enabled: {checked}")
+            for index in self.selected_rows:
+                col = model.fieldIndex("enabled")
+                logger.info(f"Index for 'enabled': {col}")
+                row = index.row()
+                if model.setData(model.index(row, col), int(checked)):
+                    if model.submitAll():
+                        logger.info(f"Topic was enabled: {checked}")
+                    else:
+                        logger.error(
+                            f"Topic error dis/enable submitAll: {model.lastError().text()}"
+                        )
                 else:
                     logger.error(
-                        f"Topic dis/enable submitAll: {model.lastError().text()}"
+                        f"Topic error dis/enable setData: {model.lastError().text()}"
                     )
-            else:
-                logger.error(f"Topic dis/enable setData: {model.lastError().text()}")
+            model.select()
 
-    def setCheckState(self, index: QModelIndex):
+    def setCheckState(self):
         """check or uncheck topic based on database data"""
-        # TODO: make this handle multiple selections
-        col = 5
-        row = index.row()
-        model = index.model()
+        states = [
+            idx.model().record(idx.row()).value("enabled") for idx in self.selected_rows
+        ]
 
-        enabled = model.data(model.index(row, col))
-        self.enabledtopic.setChecked(bool(enabled))
+        enabled = all(states)
+
+        self.enabledtopic.setChecked(enabled)
 
     def enableSubmitBtn(self):
         """if all fields have data"""
@@ -171,11 +174,11 @@ class TopicSetter(QGroupBox):
 
     def enableBtns(self):
         if indexes := self.rtable.selectionModel().selectedRows():
-            self.current_row = indexes[0].row()
+            self.selected_rows = indexes
             self.deletebtn.setEnabled(True)
             self.enabledtopic.setEnabled(True)
         else:
-            self.current_row = None
+            self.selected_rows = []
             self.disableDnCheck()
 
     def setModel(self, model: TopicsModel):
@@ -191,4 +194,4 @@ class TopicSetter(QGroupBox):
         )
 
         self.rtable.selectionModel().selectionChanged.connect(self.enableBtns)
-        self.rtable.selectionModel().currentRowChanged.connect(self.setCheckState)
+        self.rtable.selectionModel().selectionChanged.connect(self.setCheckState)
