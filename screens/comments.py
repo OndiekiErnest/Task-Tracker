@@ -12,7 +12,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from models import CommentsModel
 from customwidgets.tableviews import CommentsTable
-from customwidgets.delegates import CommentsDelegate
 from constants import EDIT_ICON, ADDTOPIC_ICON
 
 logger = logging.getLogger(__name__)
@@ -57,11 +56,3 @@ class CommentsWindow(QWidget):
         logger.info(f"Model set to '{model}'")
         self.tableview.setModel(model)
         self.tableview.hideColumn(model.fieldIndex("id"))
-
-        self.tableview.setItemDelegate(
-            CommentsDelegate(
-                model.fieldIndex("timestamp"),
-                model.fieldIndex("comment"),
-                parent=self.tableview,
-            ),
-        )
