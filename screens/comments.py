@@ -12,7 +12,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from models import CommentsModel
 from customwidgets.tableviews import CommentsTable
-from constants import EDIT_ICON, ADDTOPIC_ICON
+from constants import ADDTOPIC_ICON, DELETE_ICON, SEARCH_ICON
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +28,23 @@ class CommentsWindow(QWidget):
         toplayout = QHBoxLayout()
         layout.addLayout(toplayout)
 
-        self.edit_btn = QPushButton("Edit")
-        self.edit_btn.setIcon(QIcon(EDIT_ICON))
+        self.delete_btn = QPushButton("Delete")
+        self.delete_btn.setIcon(QIcon(DELETE_ICON))
 
         self.add_record = QPushButton("New")
         self.add_record.setIcon(QIcon(ADDTOPIC_ICON))
 
         self.search_input = QLineEdit()
+        self.search_input.addAction(
+            QIcon(SEARCH_ICON), QLineEdit.ActionPosition.LeadingPosition
+        )
         self.search_input.setPlaceholderText("Search activities...")
         self.search_input.setClearButtonEnabled(True)
 
         self.tableview = CommentsTable()
 
         # add buttons to layout
-        toplayout.addWidget(self.edit_btn, alignment=Qt.AlignmentFlag.AlignLeft)
+        toplayout.addWidget(self.delete_btn, alignment=Qt.AlignmentFlag.AlignLeft)
         toplayout.addWidget(self.add_record)
         toplayout.addStretch()
         toplayout.addWidget(self.search_input)
