@@ -13,6 +13,7 @@ from gui import MainWindow
 from models import CommentsModel, TopicsModel
 from constants import APP_DB, APP_ICON, TIMEZONE, TIME_UNITS
 from customwidgets.menus import TrayMenu
+from customwidgets.delegates import CommentsDelegate
 from screens.comment_input import InputPopup
 from datastructures.datas import TopicData
 from datastructures.settings import settings
@@ -75,6 +76,9 @@ class Tracker:
 
         self.gui.setCommentsModel(self.comments_model)
         self.gui.setSettingsModel(self.topics_model)
+
+        self.comments_delegate = CommentsDelegate()
+        self.gui.commentsview.tableview.setItemDelegate(self.comments_delegate)
 
         self.topics_model.modelReset.connect(self.on_data_changed)
         self.topics_model.dataChanged.connect(self.on_data_changed)
@@ -142,6 +146,7 @@ class Tracker:
 
     def onStartup(self):
         """get things running right away"""
+        self.comments_delegate.setTopics(self.all_topics)
         self._checkWeekend()
         self.onTimeout()
 
@@ -401,6 +406,8 @@ class Tracker:
         self.setCurrentTopics(topics)
 
         self.comments_model.select()
+
+        self.comments_delegate.setTopics(self.all_topics)
 
 
 if __name__ == "__main__":
