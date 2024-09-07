@@ -60,6 +60,8 @@ class CommentsWindow(QWidget):
 
         self.tableview.setItemDelegate(
             CommentsDelegate(
-                model.fieldIndex("timestamp"), model.fieldIndex("comment")
+                model.fieldIndex("timestamp"),
+                model.fieldIndex("comment"),
+                parent=self.tableview,
             ),
         )

@@ -267,8 +267,8 @@ class Tracker:
         query.addBindValue(time_now)
         query.addBindValue(topic_id)
         query.addBindValue(comments)
-        success = query.exec()
-        if success:
+
+        if query.exec():
             self.comments_model.select()
             self.input_window.comments.child.clear()
             self.input_window.hide()
@@ -289,7 +289,7 @@ class Tracker:
 
     def saveTopic(self):
         """set topic details in settings to database"""
-        # TODO: make changes reflect in the comments model
+        # TODO: make topic changes reflect in the comments model
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic = self.gui.settingsview.topic_adder.getTopic()
         start = self.gui.settingsview.topic_adder.getStart()
@@ -306,13 +306,14 @@ class Tracker:
         query.addBindValue(topic)
         query.addBindValue(start)
         query.addBindValue(span)
-        success = query.exec()
 
-        if success:
+        if query.exec():
             self.topics_model.select()
-            self.comments_model.select()
+            logger.info(f"comments selected: {self.comments_model.select()}")
             self.gui.settingsview.topic_adder.clearInputs()
             self.gui.settingsview.topic_adder.addSpan()
+            # show changes right away
+            self.onTimeout()
             logger.info(f"Set topic '{topic}'")
         else:
             logger.error(f"DB error setting topic: {query.lastError().driverText()}")
@@ -326,14 +327,16 @@ class Tracker:
             "All logs related to selected topics will be deleted.\nAre you sure you want to delete?"
         ):
 
-            for index in reversed(rows):
+            for index in rows:
                 row = index.row()
                 self.topics_model.deleteRowFromTable(row)
                 logger.info(f"Topic at {row} deleted from 'topics' table")
             # apply changes
             self.topics_model.select()
-            self.comments_model.select()
+            logger.info(f"comments selected: {self.comments_model.select()}")
             self.gui.settingsview.topic_adder.disableDnCheck()
+            # run check right away
+            self.onTimeout()
 
     def onSearch(self, text: str):
         """search and filter"""
@@ -352,8 +355,12 @@ class Tracker:
         show message
         """
         topics = self.getCurrentTopics()
-        disabled = not all((t.enabled for t in topics))
-        self.tray_menu.disableactn.setChecked(disabled)
+        # if notifications are enabled
+        if self.show_notifications:
+            # if not all topics are enabled
+            disabled = not all((t.enabled for t in topics))
+            # set disabled action checked
+            self.tray_menu.disableactn.setChecked(disabled)
 
         self.setCurrentTRange(topics)
         self.setCurrentTopics(topics)

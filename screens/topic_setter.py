@@ -190,7 +190,11 @@ class TopicSetter(QGroupBox):
         self.rtable.hideColumn(model.fieldIndex("enabled"))
 
         self.rtable.setItemDelegate(
-            TopicsDelegate(model.fieldIndex("start"), model.fieldIndex("span")),
+            TopicsDelegate(
+                model.fieldIndex("start"),
+                model.fieldIndex("span"),
+                parent=self.rtable,
+            ),
         )
 
         self.rtable.selectionModel().selectionChanged.connect(self.enableBtns)
