@@ -3,25 +3,46 @@
 from PyQt6.QtWidgets import (
     QStyledItemDelegate,
     QPlainTextEdit,
+    QComboBox,
     QTimeEdit,
     QSpinBox,
     QDateTimeEdit,
 )
-from PyQt6.QtSql import QSqlRelationalDelegate
 from PyQt6.QtCore import Qt, QRect, QModelIndex, QTime, QDateTime
+from PyQt6.QtGui import QPainter
 
 
-class CommentsDelegate(QSqlRelationalDelegate):
+class CommentsDelegate(QStyledItemDelegate):
     """
     delegate for the comments table,
     uses: QPlainTextEdit and QDateTimeEdit for editing large texts and datetimes
     """
 
-    def __init__(self, datetime_col: int, comment_col: int, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         # variables
-        self.datetime_col = datetime_col
-        self.comment_col = comment_col
+        self.datetime_col = 1
+        self.topic_col = 2
+        self.comment_col = 3
+        # topics
+        self._topics = []
+
+    def setTopics(self, topics: list):
+        """update topics list"""
+        self._topics = topics
+
+    def topicID(self, title: str):
+        for tpc in self._topics:
+            if tpc.title == title:
+                return tpc.topic_id
+
+    def paint(self, painter: QPainter, option, index: QModelIndex):
+        # use topic id to get title for display
+        super().paint(painter, option, index)
 
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
@@ -37,6 +58,10 @@ class CommentsDelegate(QSqlRelationalDelegate):
             editor.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             editor.setTabChangesFocus(True)
 
+        elif column == self.topic_col:
+            editor = QComboBox(parent)
+            editor.addItems(t.title for t in self._topics)
+
         else:
             # default to base class implementation for other columns
             editor = super().createEditor(parent, option, index)
@@ -47,14 +72,21 @@ class CommentsDelegate(QSqlRelationalDelegate):
         column = index.column()
         if column == self.datetime_col:
             # set data for QTimeEdit
-            datetime_str = index.model().data(index, Qt.ItemDataRole.EditRole)
+            datetime_str = index.data(Qt.ItemDataRole.EditRole)
             qdt = QDateTime.fromString(datetime_str, "yyyy-MM-dd HH:mm:ss")
             editor.setDateTime(qdt)
 
         elif column == self.comment_col:
             # set data for QPlainTextEdit
-            text = index.model().data(index, Qt.ItemDataRole.EditRole)
+            text = index.data(Qt.ItemDataRole.EditRole)
             editor.setPlainText(text)
+
+        elif column == self.topic_col:
+            topic_title = index.data(Qt.ItemDataRole.EditRole)
+            try:
+                editor.setCurrentText(topic_title)
+            except TypeError:
+                pass
         else:
             super().setEditorData(editor, index)
 
@@ -70,6 +102,11 @@ class CommentsDelegate(QSqlRelationalDelegate):
             # save data from QPlainTextEdit
             text = editor.toPlainText()
             model.setData(index, text, Qt.ItemDataRole.EditRole)
+
+        elif column == self.topic_col:
+            tpc_title = editor.currentText()
+            tpc_id = self.topicID(tpc_title)
+            model.setData(index, tpc_id, Qt.ItemDataRole.EditRole)
         else:
             super().setModelData(editor, model, index)
 
@@ -80,7 +117,7 @@ class CommentsDelegate(QSqlRelationalDelegate):
             rect = QRect(
                 option.rect.left(),
                 option.rect.top(),
-                max(230, option.rect.width()),
+                option.rect.width() + 15,
                 option.rect.height(),
             )
             editor.setGeometry(rect)
@@ -103,21 +140,21 @@ class TopicsDelegate(QStyledItemDelegate):
     uses: QTimeEdit and QSpinBox for editing time and integers
     """
 
-    def __init__(self, time_col: int, int_col: int, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # variables
-        self.time_col = time_col
-        self.int_col = int_col
+        self.time_col = 3
+        self.int_col = 4
 
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
         if column == self.time_col:
-            # Use QTimeEdit
+            # use QTimeEdit
             editor = QTimeEdit(parent)
             editor.setDisplayFormat("HH:mm:ss")  # set time format
 
         elif column == self.int_col:
-            # Use QSpinBox
+            # use QSpinBox
             editor = QSpinBox(parent)
             editor.setRange(1, 1440)
             editor.setSuffix(" mins")
@@ -132,13 +169,13 @@ class TopicsDelegate(QStyledItemDelegate):
         column = index.column()
         if column == self.time_col:
             # set data for QTimeEdit
-            time_str = index.model().data(index, Qt.ItemDataRole.EditRole)
+            time_str = index.data(Qt.ItemDataRole.EditRole)
             time = QTime.fromString(time_str, "HH:mm:ss")
             editor.setTime(time)
 
         elif column == self.int_col:
             # set data for QSpinBox
-            span_int = index.model().data(index, Qt.ItemDataRole.EditRole)
+            span_int = index.data(Qt.ItemDataRole.EditRole)
             editor.setValue(span_int)
         else:
             super().setEditorData(editor, index)
