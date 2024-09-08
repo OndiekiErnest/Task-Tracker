@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from customwidgets.groupboxes import NamedCombobox, NamedPlainTextEdit
 from constants import ADDCOMMENT_ICON
 
@@ -23,6 +23,11 @@ class InputPopup(QWidget):
         self.setWindowTitle("TLog - Log Activity")
 
         layout = QVBoxLayout(self)
+
+        # initialize the animation
+        self.animation = QPropertyAnimation(self, b"geometry")
+        self.animation.setDuration(400)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutBounce)
 
         # what are you doing right now; What are you up to?
         self.prompt = QLabel("<b>What are you up to?</b>")
@@ -55,7 +60,15 @@ class InputPopup(QWidget):
         ww, wh = self.width(), self.height()
         x, y = xw - ww, xh - wh
 
-        self.setGeometry(x - 10, y - 80, ww, wh)  # y - window titlebar
+        self.instart_geometry = QRect(
+            x + 100,
+            xh,
+            self.width() - 100,
+            self.height() - 300,
+        )
+        self.inend_geometry = QRect(x - 10, y - 80, ww, wh)
+
+        self.setGeometry(self.inend_geometry)  # y - window titlebar
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
@@ -73,6 +86,33 @@ class InputPopup(QWidget):
     def setTopicText(self, title):
         """update topic title"""
         self.topic.child.setText(title)
+
+    def slide_in(self):
+        self.animation.setStartValue(self.instart_geometry)
+        self.animation.setEndValue(self.inend_geometry)
+        self.animation.start()
+
+    def slide_out(self):
+        self.animation.setStartValue(self.geometry())
+        self.animation.setEndValue(self.instart_geometry)
+        self.animation.start()
+
+    def hide(self):
+        self.slide_out()
+
+        self.animation.finished.connect(self._hide_screen)
+
+    def showNormal(self):
+        super().showNormal()
+        self.slide_in()
+
+    def show(self):
+        super().show()
+        self.slide_in()
+
+    def _hide_screen(self):
+        super().hide()
+        self.animation.finished.disconnect(self._hide_screen)
 
     def closeEvent(self, event):
         self.hide()
