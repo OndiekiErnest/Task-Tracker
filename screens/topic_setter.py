@@ -7,13 +7,12 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QPushButton,
     QCheckBox,
-    QTableView,
-    QHeaderView,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from customwidgets.groupboxes import NamedTimeEdit, NamedLineEdit, NamedLineEditV
 from customwidgets.comboboxes import TimeUnits
+from customwidgets.tableviews import TopicsTable
 from customwidgets.delegates import TopicsDelegate
 from models import TopicsModel
 from constants import TIME_UNITS, SUBMIT_ICON, DELETE_ICON
@@ -45,15 +44,7 @@ class TopicSetter(QGroupBox):
         grouplayout.setSpacing(10)
         grouplayout.setContentsMargins(8, 20, 8, 8)
 
-        self.rtable = QTableView()
-        self.rtable.setMinimumHeight(350)
-        self.rtable.setAlternatingRowColors(True)
-        self.rtable.setSortingEnabled(True)
-        self.rtable.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.ResizeToContents
-        )
-        self.rtable.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
-        self.rtable.setWordWrap(True)
+        self.rtable = TopicsTable()
 
         self.topic_text = NamedLineEdit("Topic Title")
         self.topic_text.child.textChanged.connect(self.enableSubmitBtn)
