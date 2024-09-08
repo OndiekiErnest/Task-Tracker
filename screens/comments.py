@@ -12,6 +12,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from models import CommentsModel
 from customwidgets.tableviews import CommentsTable
+from customwidgets.buttons import InOutButton
 from constants import ADDTOPIC_ICON, DELETE_ICON, SEARCH_ICON
 
 logger = logging.getLogger(__name__)
@@ -28,8 +29,9 @@ class CommentsWindow(QWidget):
         toplayout = QHBoxLayout()
         layout.addLayout(toplayout)
 
-        self.delete_btn = QPushButton("Delete")
+        self.delete_btn = InOutButton("Delete")
         self.delete_btn.setIcon(QIcon(DELETE_ICON))
+        self.delete_btn.hide()
 
         self.add_record = QPushButton("New")
         self.add_record.setIcon(QIcon(ADDTOPIC_ICON))
@@ -59,3 +61,12 @@ class CommentsWindow(QWidget):
         logger.info(f"Model set to '{model}'")
         self.tableview.setModel(model)
         self.tableview.hideColumn(model.fieldIndex("id"))
+        self.tableview.selectionModel().selectionChanged.connect(self.toggle_delete)
+
+    def toggle_delete(self):
+        """show or hide delete_btn"""
+        if self.sRows():
+            if not self.delete_btn.isVisible():
+                self.delete_btn.show()
+        else:
+            self.delete_btn.hide()
