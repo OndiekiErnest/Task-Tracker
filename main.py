@@ -85,8 +85,9 @@ class Tracker:
         # self.topics_model.layoutChanged.connect(self.on_data_changed)
         self.topics_model.rowsRemoved.connect(self.on_data_changed)
 
-        # database viewer
+        # comments viewer btns
         self.gui.commentsview.add_record.clicked.connect(self.showInputWin)
+        self.gui.commentsview.delete_btn.clicked.connect(self.deleteComment)
         # settings
         self.gui.settingsview.topic_adder.addbtn.clicked.connect(self.saveTopic)
         self.gui.settingsview.topic_adder.deletebtn.clicked.connect(self.deleteTopic)
@@ -285,16 +286,19 @@ class Tracker:
         """delete comment record from database"""
         selected = self.gui.commentsview.sRows()
         if selected:
-            for index in selected:
-                row = index.row()
-                self.comments_model.deleteRowFromTable(row)
-                logger.info(f"Activity at {row} deleted from 'comments' table")
-                # apply changes
-            self.comments_model.select()
+            logs_len = len(selected)
+            if self.gui.ask(
+                f"{logs_len} {'logs' if logs_len > 1 else 'log'} will be deleted permanently.\nAre you sure you want to delete?"
+            ):
+                for index in selected:
+                    row = index.row()
+                    self.comments_model.deleteRowFromTable(row)
+                    logger.info(f"Activity at {row} deleted from 'comments' table")
+                    # apply changes
+                self.comments_model.select()
 
     def saveTopic(self):
         """set topic details in settings to database"""
-        # TODO: make topic changes reflect in the comments model
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic = self.gui.settingsview.topic_adder.getTopic()
         start = self.gui.settingsview.topic_adder.getStart()
@@ -325,11 +329,11 @@ class Tracker:
 
     def deleteTopic(self):
         """delete topic details in settings"""
-        # TODO: make changes reflect in the comments model
         rows = self.gui.settingsview.topic_adder.sRows()
-        logger.info(f"Total to be deleted: {len(rows)}")
+        rows_len = len(rows)
+        logger.info(f"Total to be deleted: {rows_len}")
         if self.gui.ask(
-            "All logs related to selected topics will be deleted.\nAre you sure you want to delete?"
+            f"All logs related to {rows_len} {'topics' if rows_len > 1 else 'topic'} will be deleted.\nAre you sure you want to delete?"
         ):
 
             for index in rows:
@@ -381,7 +385,7 @@ class Tracker:
                 "How is the topic going?",
                 f"Log your achievements. \n{tp_len} {'topics' if tp_len > 1 else 'topic'} ending {end}",
                 self.app_icon,
-                msecs=10000,
+                # msecs=10000,
             )
 
     def onTrayDisable(self, disabled: bool):
