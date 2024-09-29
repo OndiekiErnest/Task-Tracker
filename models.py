@@ -3,10 +3,8 @@
 import logging
 from PyQt6.QtCore import Qt
 from PyQt6.QtSql import (
-    QSqlRelation,
     QSqlQuery,
     QSqlTableModel,
-    QSqlRelationalTableModel,
 )
 
 
@@ -31,7 +29,7 @@ PROBLEMS_HEADERS = {
 }
 
 
-class CommentsModel(QSqlRelationalTableModel):
+class CommentsModel(QSqlTableModel):
     """table model class that reads and writes comments to a local file database"""
 
     def __init__(self, db, **kwargs):
@@ -55,10 +53,6 @@ class CommentsModel(QSqlRelationalTableModel):
         if created:
             # set table name
             self.setTable("comments")
-            self.setRelation(
-                self.fieldIndex("topic_id"),
-                QSqlRelation("topics", "id", "topic"),
-            )
             logger.info("Table created and set to 'comments'")
         else:
             logger.error(
@@ -69,7 +63,7 @@ class CommentsModel(QSqlRelationalTableModel):
             idx = self.fieldIndex(k)
             self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
         # edit strategy
-        self.setEditStrategy(QSqlRelationalTableModel.EditStrategy.OnFieldChange)
+        self.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
         # sort before select
         self.setSort(self.fieldIndex("timestamp"), Qt.SortOrder.DescendingOrder)
         # select
