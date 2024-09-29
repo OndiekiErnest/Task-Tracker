@@ -99,7 +99,7 @@ class Tracker:
         self.tray_menu.more.clicked.connect(self.showActivities)
 
         self.tray_menu.disableactn.toggled.connect(self.onTrayDisable)
-        self.gui.settingsview.disable_notifications.disable_all.toggled.connect(
+        self.gui.settingsview.notifs_group.disable_notifications.disable_all.toggled.connect(
             self.tray_menu.disableactn.setChecked
         )
 
@@ -389,7 +389,7 @@ class Tracker:
             )
 
     def onTrayDisable(self, disabled: bool):
-        self.gui.settingsview.disable_notifications.disable_all.setChecked(disabled)
+        self.gui.settingsview.notifs_group.disable_notifications.disable_all.setChecked(disabled)
         self.toggleNotifications(disabled)
 
     def toggleNotifications(self, disabled: bool):
