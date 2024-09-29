@@ -46,8 +46,8 @@ class CommentsWindow(QWidget):
         self.tableview = CommentsTable()
 
         # add buttons to layout
-        toplayout.addWidget(self.delete_btn, alignment=Qt.AlignmentFlag.AlignLeft)
-        toplayout.addWidget(self.add_record)
+        toplayout.addWidget(self.add_record, alignment=Qt.AlignmentFlag.AlignLeft)
+        toplayout.addWidget(self.delete_btn)
         toplayout.addStretch()
         toplayout.addWidget(self.search_input)
 
