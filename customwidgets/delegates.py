@@ -150,7 +150,7 @@ class CommentsDelegate(QStyledItemDelegate):
                 option.rect.left(),
                 option.rect.top(),
                 max(200, option.rect.width()),
-                400,
+                300,
             )
             editor.setGeometry(rect)
         else:
