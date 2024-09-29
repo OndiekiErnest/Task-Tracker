@@ -36,13 +36,36 @@ class CommentsDelegate(QStyledItemDelegate):
         self._topics = topics
 
     def topicID(self, title: str):
+        """get topic id from title"""
         for tpc in self._topics:
             if tpc.title == title:
                 return tpc.topic_id
 
+    def topicTitle(self, topic_id: int):
+        """get topic title from id"""
+        for tpc in self._topics:
+            if tpc.topic_id == topic_id:
+                return tpc.title
+
     def paint(self, painter: QPainter, option, index: QModelIndex):
         # use topic id to get title for display
-        super().paint(painter, option, index)
+        if index.column() == self.topic_col:
+            topic_id = index.data(Qt.ItemDataRole.DisplayRole)
+            title = self.topicTitle(topic_id)
+            # paint background
+            painter.fillRect(option.rect, option.backgroundBrush)
+            # set the text color
+            painter.setPen(option.palette.text().color())
+
+            # draw text with proper alignment
+            painter.drawText(
+                option.rect,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                title,
+            )
+
+        else:
+            super().paint(painter, option, index)
 
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
@@ -82,11 +105,10 @@ class CommentsDelegate(QStyledItemDelegate):
             editor.setPlainText(text)
 
         elif column == self.topic_col:
-            topic_title = index.data(Qt.ItemDataRole.EditRole)
-            try:
-                editor.setCurrentText(topic_title)
-            except TypeError:
-                pass
+            topic_id = index.data(Qt.ItemDataRole.EditRole)
+            if title := self.topicTitle(topic_id):
+                editor.setCurrentText(title)
+
         else:
             super().setEditorData(editor, index)
 
@@ -107,6 +129,7 @@ class CommentsDelegate(QStyledItemDelegate):
             tpc_title = editor.currentText()
             tpc_id = self.topicID(tpc_title)
             model.setData(index, tpc_id, Qt.ItemDataRole.EditRole)
+
         else:
             super().setModelData(editor, model, index)
 
