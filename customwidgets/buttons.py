@@ -21,7 +21,7 @@ class InOutButton(QPushButton):
         self.animation.setDuration(500)  # duration of the slide-in animation
         self.animation.setStartValue(
             QRect(
-                -100,
+                self.geometry().right() + 20,
                 self.geometry().top(),
                 self.width(),
                 self.height(),
