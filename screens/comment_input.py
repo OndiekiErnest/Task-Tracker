@@ -3,7 +3,7 @@
 from PyQt6.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
-from customwidgets.groupboxes import NamedCombobox, NamedPlainTextEdit
+from customwidgets.groupboxes import NamedCombobox, NamedPlainTextEdit, NamedLineEdit
 from constants import ADDCOMMENT_ICON
 
 
@@ -44,13 +44,19 @@ class InputPopup(QWidget):
         self.comments.child.setPlaceholderText(placeholder)
         self.comments.child.textChanged.connect(self.enableSubmit)
 
-        self.submit = QPushButton("Add Log")
+        self.solved_problem = NamedCombobox("Problem solved (Optional)")
+
+        self.problem = NamedLineEdit("Problem you're facing (Optional)")
+
+        self.submit = QPushButton("Submit")
         self.submit.setIcon(QIcon(ADDCOMMENT_ICON))
         self.submit.setMinimumWidth(60)
         self.submit.setDisabled(True)
 
         layout.addWidget(self.topic)
         layout.addWidget(self.comments)
+        layout.addWidget(self.solved_problem)
+        layout.addWidget(self.problem)
         layout.addWidget(self.submit, alignment=Qt.AlignmentFlag.AlignLeft)
 
         # set geometry after widgets have been drawn
