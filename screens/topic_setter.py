@@ -30,7 +30,7 @@ class TopicSetter(QGroupBox):
         self.selected_rows = []
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(10)
+        layout.setSpacing(20)
         layout.setContentsMargins(8, 20, 8, 8)
 
         btnslayout = QHBoxLayout()
