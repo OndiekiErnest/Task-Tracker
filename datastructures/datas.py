@@ -20,6 +20,17 @@ class TopicData:
         self.ends = self.starts + timedelta(minutes=self.span)
 
 
+@dataclass(slots=True, kw_only=True)
+class ProblemData:
+    """problem attrs"""
+
+    problem_id: int
+    created: datetime
+    problem: str
+    topic_id: int
+    solved: bool
+
+
 @dataclass(frozen=True)
 class Key:
     """singleton key"""
