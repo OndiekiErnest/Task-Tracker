@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve
 from customwidgets.groupboxes import NamedCombobox, NamedPlainTextEdit, NamedLineEdit
-from constants import ADDCOMMENT_ICON
+from constants import ADDCOMMENT_ICON, SOLVED_PLACEHOLDER
 
 
 placeholder = """
@@ -92,6 +92,20 @@ class InputPopup(QWidget):
     def setTopicText(self, title):
         """update topic title"""
         self.topic.child.setText(title)
+
+    def setProblems(self, problems):
+        """set problem titles"""
+        self.solved_problem.child.clear()
+        self.solved_problem.child.addItems(p.problem for p in problems)
+        self.solved_problem.child.addItem(SOLVED_PLACEHOLDER)
+        self.solved_problem.child.setCurrentText(SOLVED_PLACEHOLDER)
+
+    def clear(self):
+        """clear/reset fields"""
+        self.comments.child.clear()
+        self.problem.child.clear()
+        # set the solved problem to placeholder
+        self.solved_problem.child.setCurrentText(SOLVED_PLACEHOLDER)
 
     def slide_in(self):
         self.animation.setStartValue(self.instart_geometry)
