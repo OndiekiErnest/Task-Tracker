@@ -41,7 +41,7 @@ class CommentsModel(QSqlTableModel):
             """
             CREATE TABLE IF NOT EXISTS comments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
+                timestamp DATETIME,
                 topic_id INTEGER NOT NULL,
                 comment TEXT NOT NULL,
                 FOREIGN KEY(topic_id) REFERENCES topics(id) ON DELETE CASCADE
@@ -84,7 +84,7 @@ class TopicsModel(QSqlTableModel):
             """
             CREATE TABLE IF NOT EXISTS topics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
+                timestamp DATETIME,
                 topic TEXT NOT NULL UNIQUE,
                 start TEXT NOT NULL,
                 span INTEGER NOT NULL,
@@ -126,10 +126,10 @@ class ProblemsModel(QSqlTableModel):
             """
             CREATE TABLE IF NOT EXISTS problems (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT (datetime('now', 'localtime')),
+                timestamp DATETIME,
                 problem TEXT NOT NULL UNIQUE,
-                solved INTEGER NOT NULL DEFAULT 0,
                 topic_id INTEGER NOT NULL,
+                solved INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY(topic_id) REFERENCES topics(id) ON DELETE CASCADE
             )
             """
