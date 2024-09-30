@@ -12,13 +12,13 @@ class InOutButton(QPushButton):
 
         # initialize the animation
         self.animation = QPropertyAnimation(self, b"geometry")
+        self.animation.setDuration(400)  # duration of the slide animation
 
     def show(self):
         super().show()
         self.slide_in()
 
     def slide_in(self):
-        self.animation.setDuration(500)  # duration of the slide-in animation
         self.animation.setStartValue(
             QRect(
                 self.geometry().right() + 20,
@@ -39,7 +39,6 @@ class InOutButton(QPushButton):
         self.animation.start()
 
     def slide_out(self):
-        self.animation.setDuration(500)  # duration of the slide-out animation
         self.animation.setStartValue(self.geometry())
         self.animation.setEndValue(
             QRect(-100, self.geometry().top(), self.width(), self.height())
