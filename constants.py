@@ -33,6 +33,8 @@ SETTINGS_ICON = os.path.join(ICONS_DIR, "settings_32dp.png")
 ADDCOMMENT_ICON = os.path.join(ICONS_DIR, "add_comment_32dp.png")
 ADDTOPIC_ICON = os.path.join(ICONS_DIR, "add_32dp.png")
 
+SOLVED_PLACEHOLDER = " -- Select -- "
+
 TIME_UNITS = {"hours": 60, "minutes": 1}
 
 DEFAULT_SETTINGS = {
