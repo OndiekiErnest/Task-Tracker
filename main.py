@@ -10,12 +10,12 @@ from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 from PyQt6.QtGui import QIcon
 from humanize import naturaltime
 from gui import MainWindow
-from models import CommentsModel, TopicsModel
-from constants import APP_DB, APP_ICON, TIMEZONE, TIME_UNITS
+from models import CommentsModel, TopicsModel, ProblemsModel
+from constants import APP_DB, APP_ICON, TIMEZONE, TIME_UNITS, SOLVED_PLACEHOLDER
 from customwidgets.menus import TrayMenu
 from customwidgets.delegates import CommentsDelegate
 from screens.comment_input import InputPopup
-from datastructures.datas import TopicData
+from datastructures.datas import TopicData, ProblemData
 from datastructures.settings import settings
 from qstyles import STYLE
 
@@ -71,8 +71,10 @@ class Tracker:
         # models
         self.comments_model = CommentsModel(self.db)
         self.topics_model = TopicsModel(self.db)
+        self.problems_model = ProblemsModel(self.db)
 
         self.all_topics = self.getTopics()
+        self.all_problems = self.getProblems()
 
         self.gui.setCommentsModel(self.comments_model)
         self.gui.setSettingsModel(self.topics_model)
@@ -80,10 +82,14 @@ class Tracker:
         self.comments_delegate = CommentsDelegate()
         self.gui.commentsview.tableview.setItemDelegate(self.comments_delegate)
 
-        self.topics_model.modelReset.connect(self.on_data_changed)
-        self.topics_model.dataChanged.connect(self.on_data_changed)
+        self.topics_model.modelReset.connect(self.on_topics_changed)
+        self.topics_model.dataChanged.connect(self.on_topics_changed)
         # self.topics_model.layoutChanged.connect(self.on_data_changed)
-        self.topics_model.rowsRemoved.connect(self.on_data_changed)
+        self.topics_model.rowsRemoved.connect(self.on_topics_changed)
+
+        self.topics_model.modelReset.connect(self.on_problems_changed)
+        self.topics_model.dataChanged.connect(self.on_problems_changed)
+        self.topics_model.rowsRemoved.connect(self.on_problems_changed)
 
         # comments viewer btns
         self.gui.commentsview.add_record.clicked.connect(self.showInputWin)
@@ -119,6 +125,12 @@ class Tracker:
         for topic in self.all_topics:
             if topic.title == title:
                 return topic.topic_id
+
+    def _problemID(self, problem: str):
+        """get problem id by it's statement"""
+        for p in self.all_problems:
+            if p.problem == problem:
+                return p.problem_id
 
     def _setNotificationsInterval(self):
         """update notification interval"""
@@ -213,10 +225,51 @@ class Tracker:
         topics_list.sort(key=lambda t: t.starts)
         return topics_list
 
+    def getProblems(self):
+        """create problems data"""
+
+        # get the number of rows
+        row_count = self.problems_model.rowCount()
+
+        # create a list to store rows as ProblemData instances
+        problems_list: list[ProblemData] = []
+        # iterate over each row and column to collect data
+        for row in range(row_count):
+            # get the QSqlRecord for the row
+            record = self.problems_model.record(row)
+            problem_kw = {}
+            # extract row data
+            for c in range(record.count()):
+                value = record.value(c)
+                match c:
+                    case 0:
+                        problem_kw["problem_id"] = value
+                    case 1:
+                        problem_kw["created"] = datetime.strptime(
+                            value, "%Y-%m-%d %H:%M:%S"
+                        )
+                    case 2:
+                        problem_kw["problem"] = value
+                    case 3:
+                        problem_kw["topic_id"] = value
+                    case 4:
+                        problem_kw["solved"] = bool(value)
+                    case _:
+                        pass
+
+            problems_list.append(ProblemData(**problem_kw))
+
+        problems_list.sort(key=lambda p: p.created)
+        return problems_list
+
     def getCurrentTopics(self):
         """calculate the currrent topics based on the current time"""
         now = datetime.now(tz=TIMEZONE)
         return [topic for topic in self.all_topics if topic.starts <= now <= topic.ends]
+
+    def getUnsolvedProblems(self):
+        """get problems that not been solved"""
+        return [problem for problem in self.all_problems if not problem.solved]
 
     def setCurrentTopics(self, current_topics: list):
         """add current topics to the input window"""
@@ -256,12 +309,64 @@ class Tracker:
         else:
             self.input_window.showNormal()
 
+    def handle_problem(self, timestamp: str, topic_id: int, new: str, solved: str):
+        """create new problem if exists, mark old as solved if exists"""
+        problems_changed = False
+
+        if new:
+            query = QSqlQuery(self.db)
+            query.prepare(
+                """
+                INSERT INTO problems (timestamp, problem, topic_id)
+                VALUES (?, ?, ?)
+                """
+            )
+            query.addBindValue(timestamp)
+            query.addBindValue(new)
+            query.addBindValue(topic_id)
+
+            if query.exec():
+                problems_changed = True
+                logger.info("Added problem to table")
+            else:
+                logger.error(
+                    f"DB error adding problem: {query.lastError().driverText()}"
+                )
+
+        if solved and (solved != SOLVED_PLACEHOLDER):
+            solved_id = self._problemID(solved)
+
+            query = QSqlQuery(self.db)
+            query.prepare("UPDATE problems SET solved = 1 WHERE id = ?")
+            query.addBindValue(solved_id)
+
+            if query.exec():
+                problems_changed = True
+                logger.info(f"Problem marked as solved: '{solved}'")
+            else:
+                logger.error(
+                    f"DB error updating problem: {query.lastError().driverText()}"
+                )
+
+        if problems_changed:
+
+            self.problems_model.select()
+            self.all_problems = self.getProblems()
+
+            problems = self.getUnsolvedProblems()
+            self.input_window.setProblems(problems)
+
     def logComment(self):
         """add comment record to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic_title = self.input_window.topic.child.currentText()
         topic_id = self._topicIDByTitle(topic_title)
         comments = self.input_window.comments.child.toPlainText()
+
+        new_problem = self.input_window.problem.child.text()
+        solved_problem = self.input_window.solved_problem.child.currentText()
+
+        self.handle_problem(time_now, topic_id, new_problem, solved_problem)
 
         query = QSqlQuery(self.db)
         query.prepare(
@@ -276,7 +381,7 @@ class Tracker:
 
         if query.exec():
             self.comments_model.select()
-            self.input_window.comments.child.clear()
+            self.input_window.clear()
             self.input_window.hide()
             logger.info(f"Added comment related to '{topic_id} - {topic_title}'")
         else:
@@ -340,6 +445,7 @@ class Tracker:
                 row = index.row()
                 self.topics_model.deleteRowFromTable(row)
                 logger.info(f"Topic at {row} deleted from 'topics' table")
+
             # apply changes
             self.topics_model.select()
             logger.info(f"comments selected: {self.comments_model.select()}")
@@ -352,7 +458,9 @@ class Tracker:
         # TODO: Improve search
         ss = re.sub(r"[\W_]+", "", text.strip().lower())
         if ss:
-            filter_query = f'comments.comment LIKE "%{ss}%"'
+            filter_query = (
+                f'comments.comment LIKE "%{ss}%" OR comments.timestamp LIKE "%{ss}%"'
+            )
             self.comments_model.setFilter(filter_query)
         else:
             self.comments_model.setFilter("")  # remove the filter to show all records
@@ -371,8 +479,12 @@ class Tracker:
             # set disabled action checked
             self.tray_menu.disableactn.setChecked(disabled)
 
+        problems = self.getUnsolvedProblems()
+        self.input_window.setProblems(problems)
+
         self.setCurrentTRange(topics)
         self.setCurrentTopics(topics)
+
         self.showMessage(topics)
 
     def showMessage(self, current_topics: list):
@@ -401,7 +513,7 @@ class Tracker:
             self.show_notifications = True
             logger.info("Notifications enabled")
 
-    def on_data_changed(self, *args, **kwargs):
+    def on_topics_changed(self, *args, **kwargs):
         logger.info("Data changed in 'topics' model")
         self.all_topics = self.getTopics()
 
@@ -412,6 +524,15 @@ class Tracker:
         self.comments_model.select()
 
         self.comments_delegate.setTopics(self.all_topics)
+
+    def on_problems_changed(self, *args, **kwargs):
+        logger.info("Data changed in 'problems' model")
+        self.all_problems = self.getProblems()
+
+        problems = self.getUnsolvedProblems()
+        self.input_window.setProblems(problems)
+
+        # self.problems_delegate.setTopics(self.all_topics)
 
 
 if __name__ == "__main__":
