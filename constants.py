@@ -27,7 +27,7 @@ else:
 
 DELETE_ICON = os.path.join(ICONS_DIR, "delete_32dp.png")
 SUBMIT_ICON = os.path.join(ICONS_DIR, "done_all_32dp.png")
-ACTIVITIES_ICON = os.path.join(ICONS_DIR, "forum_32dp.png")
+ENTRIES_ICON = os.path.join(ICONS_DIR, "forum_32dp.png")
 SEARCH_ICON = os.path.join(ICONS_DIR, "search_32dp.png")
 SETTINGS_ICON = os.path.join(ICONS_DIR, "settings_32dp.png")
 ADDCOMMENT_ICON = os.path.join(ICONS_DIR, "add_comment_32dp.png")
