@@ -47,25 +47,25 @@ class CommentsDelegate(QStyledItemDelegate):
             if tpc.topic_id == topic_id:
                 return tpc.title
 
-    def paint(self, painter: QPainter, option, index: QModelIndex):
-        # use topic id to get title for display
-        if index.column() == self.topic_col:
-            topic_id = index.data(Qt.ItemDataRole.DisplayRole)
-            title = self.topicTitle(topic_id)
-            # paint background
-            painter.fillRect(option.rect, option.backgroundBrush)
-            # set the text color
-            painter.setPen(option.palette.text().color())
+    # def paint(self, painter: QPainter, option, index: QModelIndex):
+    #     # use topic id to get title for display
+    #     if index.column() == self.topic_col:
+    #         topic_id = index.data(Qt.ItemDataRole.DisplayRole)
+    #         title = self.topicTitle(topic_id)
+    #         # paint background
+    #         painter.fillRect(option.rect, option.backgroundBrush)
+    #         # set the text color
+    #         painter.setPen(option.palette.text().color())
 
-            # draw text with proper alignment
-            painter.drawText(
-                option.rect,
-                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                title,
-            )
+    #         # draw text with proper alignment
+    #         painter.drawText(
+    #             option.rect,
+    #             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+    #             title,
+    #         )
 
-        else:
-            super().paint(painter, option, index)
+    #     else:
+    #         super().paint(painter, option, index)
 
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
@@ -93,21 +93,23 @@ class CommentsDelegate(QStyledItemDelegate):
 
     def setEditorData(self, editor, index: QModelIndex):
         column = index.column()
+        value = index.data(Qt.ItemDataRole.EditRole)
+
         if column == self.datetime_col:
             # set data for QTimeEdit
-            datetime_str = index.data(Qt.ItemDataRole.EditRole)
-            qdt = QDateTime.fromString(datetime_str, "yyyy-MM-dd HH:mm:ss")
+            qdt = QDateTime.fromString(value, "yyyy-MM-dd HH:mm:ss")
             editor.setDateTime(qdt)
 
         elif column == self.comment_col:
             # set data for QPlainTextEdit
-            text = index.data(Qt.ItemDataRole.EditRole)
-            editor.setPlainText(text)
+            editor.setPlainText(value)
 
         elif column == self.topic_col:
-            topic_id = index.data(Qt.ItemDataRole.EditRole)
-            if title := self.topicTitle(topic_id):
-                editor.setCurrentText(title)
+            try:
+                editor.setCurrentText(value)
+            except TypeError:
+                # raised if an int is being set
+                pass
 
         else:
             super().setEditorData(editor, index)
