@@ -9,9 +9,10 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIcon
 from models import CommentsModel, TopicsModel
+from customwidgets.menus import NewTopicMenu
 from screens.settings import SettingsWindow
 from screens.comments import CommentsWindow
-from constants import APP_ICON, ACTIVITIES_ICON, SETTINGS_ICON
+from constants import APP_ICON, ENTRIES_ICON, SETTINGS_ICON
 
 
 logger = logging.getLogger(__name__)
@@ -28,8 +29,11 @@ class MainWindow(QWidget):
 
         layout = QVBoxLayout(self)
 
+        self.topic_menu = NewTopicMenu(self)
+
         # widgets
         self.commentsview = CommentsWindow()
+        self.commentsview.add_topic.setMenu(self.topic_menu)
 
         self.settingsview = SettingsWindow()
 
@@ -41,11 +45,11 @@ class MainWindow(QWidget):
         layout.addWidget(self.tabwidget)
 
         # add views to tab widget
-        self.tabwidget.addTab(self.commentsview, QIcon(ACTIVITIES_ICON), "Activities")
+        self.tabwidget.addTab(self.commentsview, QIcon(ENTRIES_ICON), "Entries")
         self.tabwidget.addTab(self.settingsview, QIcon(SETTINGS_ICON), "Settings")
 
-    def switchToActivities(self):
-        """make activities the active tab"""
+    def switchToEntries(self):
+        """make entries the active tab"""
         index = self.tabwidget.indexOf(self.commentsview)
         self.tabwidget.setCurrentIndex(index)
 
