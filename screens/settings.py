@@ -3,9 +3,8 @@
 import logging
 from PyQt6.QtWidgets import QScrollArea, QWidget, QGroupBox, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt
-from screens.topic_setter import TopicSetter
 from customwidgets.frames import Line
-from customwidgets.groupboxes import NamedLineEditV, DisableNotifs
+from customwidgets.groupboxes import NamedLineEditV, DisableNotifs, TopicOptions
 from customwidgets.comboboxes import TimeUnits
 from models import TopicsModel
 from datastructures.settings import settings
@@ -73,17 +72,17 @@ class SettingsWindow(QScrollArea):
         self.setWidget(swidget)
 
         # widgets
-        # set topic title, start, stop
-        self.topic_adder = TopicSetter()
+        # topics viewer and settings
+        self.topic_options = TopicOptions()
 
         # notifications group
-        self.notifs_group = NotificationsSettings()
+        self.notifs_options = NotificationsSettings()
 
-        layout.addWidget(self.topic_adder)
+        layout.addWidget(self.topic_options)
         layout.addWidget(Line())
-        layout.addWidget(self.notifs_group)
+        layout.addWidget(self.notifs_options)
 
     def setModel(self, model: TopicsModel):
         """set model for topics"""
         logger.info(f"Model set to '{model}'")
-        self.topic_adder.setModel(model)
+        self.topic_options.setModel(model)
