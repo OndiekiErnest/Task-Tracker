@@ -29,12 +29,3 @@ class ProblemData:
     problem: str
     topic_id: int
     solved: bool
-
-
-@dataclass(frozen=True)
-class Key:
-    """singleton key"""
-
-    obj: object
-    args: tuple
-    kwargs: frozenset

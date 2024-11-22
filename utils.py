@@ -3,21 +3,8 @@
 import ctypes
 import orjson
 import logging
-from datastructures.datas import Key
 
 logger = logging.getLogger(__name__)
-
-
-class Singleton(type):
-    """singleton metaclass"""
-
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        key = Key(obj=cls, args=args, kwargs=frozenset(kwargs.items()))
-        if key not in cls._instances:
-            cls._instances[key] = super().__call__(*args, **kwargs)
-        return cls._instances[key]
 
 
 def hidePath(path: str):
