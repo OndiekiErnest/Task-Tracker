@@ -16,10 +16,7 @@ from PyQt6.QtCore import Qt, QRegularExpression
 from PyQt6.QtGui import QIcon, QRegularExpressionValidator
 from datastructures.settings import settings
 from customwidgets.comboboxes import TopicsCombobox, TimeUnits
-from customwidgets.tableviews import TopicsTable
-from customwidgets.delegates import TopicsDelegate
-from models import TopicsModel
-from constants import SUBMIT_ICON, DELETE_ICON
+from constants import SUBMIT_ICON
 
 
 logger = logging.getLogger(__name__)
@@ -182,7 +179,7 @@ class NewTopic(QGroupBox):
 
         layout.addWidget(self.topic_title)
         layout.addLayout(datetimeslayout)
-        layout.addWidget(self.addbtn, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.addbtn, alignment=Qt.AlignmentFlag.AlignRight)
 
     def enableSubmitBtn(self):
         """if all fields have data"""
@@ -197,98 +194,45 @@ class NewTopic(QGroupBox):
             self.addbtn.setDisabled(True)
 
 
-class TopicOptions(QGroupBox):
-    """topics viewer and settings widget"""
+class NewProblem(QGroupBox):
+    """group widget holding widgets for adding new problem"""
 
     def __init__(self, **kwargs):
-        super().__init__("Topics", **kwargs)
-
-        self.selected_rows = []
+        super().__init__("New Problem", **kwargs)
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
+        layout.setSpacing(10)
         layout.setContentsMargins(8, 20, 8, 8)
 
-        btnslayout = QHBoxLayout()
-        btnslayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        btnslayout.setSpacing(30)
+        self.problem_title = NamedLineEdit("Problem Title")
+        self.problem_title.child.textChanged.connect(self.enableSubmitBtn)
 
-        self.rtable = TopicsTable()
+        self.topics = NamedCombobox("Related Topic")
+        self.topics.child.currentTextChanged.connect(self.enableSubmitBtn)
 
-        self.deletebtn = QPushButton("Delete")
-        self.deletebtn.setIcon(QIcon(DELETE_ICON))
-        self.deletebtn.setDisabled(True)
+        self.addbtn = QPushButton("Submit")
+        self.addbtn.setIcon(QIcon(SUBMIT_ICON))
+        self.addbtn.setDisabled(True)
 
-        self.enabledtopic = QCheckBox("Enable Notifications")
-        self.enabledtopic.setDisabled(True)
-        self.enabledtopic.clicked.connect(self.enableDisableNotifs)
+        layout.addWidget(self.problem_title)
+        layout.addWidget(self.topics)
+        layout.addWidget(self.addbtn, alignment=Qt.AlignmentFlag.AlignRight)
 
-        btnslayout.addWidget(self.deletebtn)
-        btnslayout.addWidget(self.enabledtopic)
-
-        layout.addLayout(btnslayout)
-        layout.addWidget(self.rtable)
-
-    def disableDnCheck(self):
-        """disable delete and checkbox"""
-        self.deletebtn.setDisabled(True)
-        self.enabledtopic.setDisabled(True)
-
-    def sRows(self):
-        """return selected rows"""
-        return self.selected_rows
-
-    def enableDisableNotifs(self):
-        """disable/enable topic from sending notifications"""
-        if self.selected_rows:
-            checked = self.enabledtopic.isChecked()
-            model = self.rtable.model()
-            for index in self.selected_rows:
-                col = model.fieldIndex("enabled")
-                row = index.row()
-                if model.setData(model.index(row, col), int(checked)):
-                    if model.submitAll():
-                        logger.info(f"Topic was enabled: {checked}")
-                    else:
-                        logger.error(
-                            f"Topic error dis/enable submitAll: {model.lastError().text()}"
-                        )
-                else:
-                    logger.error(
-                        f"Topic error dis/enable setData: {model.lastError().text()}"
-                    )
-            # model.select()
-
-    def setCheckState(self):
-        """check or uncheck topic based on database data"""
-        states = [
-            idx.model().record(idx.row()).value("enabled") for idx in self.selected_rows
-        ]
-
-        enabled = all(states)
-
-        self.enabledtopic.setChecked(enabled)
-
-    def enableBtns(self):
-        if indexes := self.rtable.selectionModel().selectedRows():
-            self.selected_rows = indexes
-            self.deletebtn.setEnabled(True)
-            self.enabledtopic.setEnabled(True)
+    def enableSubmitBtn(self, *args):
+        """if all fields have data"""
+        if all(
+            (
+                self.problem_title.child.text(),
+                self.topics.child.currentText(),
+            )
+        ):
+            self.addbtn.setEnabled(True)
         else:
-            self.selected_rows = []
-            self.disableDnCheck()
+            self.addbtn.setDisabled(True)
 
-    def setModel(self, model: TopicsModel):
-        """set model to use"""
-        self.rtable.setModel(model)
-
-        self.rtable.hideColumn(model.fieldIndex("id"))
-        self.rtable.hideColumn(model.fieldIndex("timestamp"))
-        self.rtable.hideColumn(model.fieldIndex("enabled"))
-
-        self.rtable.setItemDelegate(
-            TopicsDelegate(parent=self.rtable),
-        )
-
-        self.rtable.selectionModel().selectionChanged.connect(self.enableBtns)
-        self.rtable.selectionModel().selectionChanged.connect(self.setCheckState)
+    def setTopics(self, topics, current: list = None):
+        """add topics to drop-down menu"""
+        self.topics.addItems(topics)
+        if current:
+            title = current[0].title
+            self.topics.setCurrentTopic(title)
