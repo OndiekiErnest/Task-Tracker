@@ -8,8 +8,8 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 from PyQt6.QtGui import QIcon
-from models import CommentsModel, TopicsModel
-from customwidgets.menus import NewTopicMenu
+from models import CommentsModel, TopicsModel, ProblemsModel
+from customwidgets.menus import NewTopicMenu, NewProblemMenu
 from screens.settings import SettingsWindow
 from screens.comments import CommentsWindow
 from constants import APP_ICON, ENTRIES_ICON, SETTINGS_ICON
@@ -31,11 +31,15 @@ class MainWindow(QWidget):
 
         self.topic_menu = NewTopicMenu(self)
 
+        self.problem_menu = NewProblemMenu(self)
+
         # widgets
         self.commentsview = CommentsWindow()
-        self.commentsview.add_topic.setMenu(self.topic_menu)
+        self.commentsview.table_group.new_topic.setMenu(self.topic_menu)
 
         self.settingsview = SettingsWindow()
+        self.settingsview.topic_options.new_topic.setMenu(self.topic_menu)
+        self.settingsview.problem_options.new_problem.setMenu(self.problem_menu)
 
         self.tabwidget = QTabWidget()
         self.tabwidget.setTabBarAutoHide(True)
@@ -62,9 +66,13 @@ class MainWindow(QWidget):
         """set database model"""
         self.commentsview.setModel(model)
 
-    def setSettingsModel(self, model: TopicsModel):
+    def setTopicsModel(self, model: TopicsModel):
         """set model for topics"""
-        self.settingsview.setModel(model)
+        self.settingsview.setTopicsModel(model)
+
+    def setProblemsModel(self, model: ProblemsModel):
+        """set model for problems"""
+        self.settingsview.setProblemsModel(model)
 
     def ask(self, quiz: str):
         return (
