@@ -1,8 +1,10 @@
 """app utility functions"""
 
+import os
 import ctypes
 import orjson
 import logging
+from subprocess import run as subrun
 
 logger = logging.getLogger(__name__)
 
@@ -39,3 +41,9 @@ def saveJSON(filename: str, data):
     with open(filename, "wb") as file:
         serialized = orjson.dumps(data, option=orjson.OPT_INDENT_2)
         file.write(serialized)
+
+
+def open_folder_in_explorer(folder_path: str):
+    """open a folder in Windows File Explorer"""
+    if os.path.exists(folder_path):
+        subrun(["explorer", folder_path])
