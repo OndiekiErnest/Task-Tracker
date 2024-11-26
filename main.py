@@ -5,14 +5,14 @@ import logging
 from datetime import datetime
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 from PyQt6.QtCore import QTimer
-from PyQt6.QtSql import QSqlDatabase, QSqlQuery
+from PyQt6.QtSql import QSqlDatabase
 from PyQt6.QtGui import QIcon
 from humanize import naturaltime
 from gui import MainWindow
 from models import CommentsModel, TopicsModel, ProblemsModel
 from constants import APP_DB, APP_ICON, TIMEZONE, TIME_UNITS, SOLVED_PLACEHOLDER
 from customwidgets.menus import TrayMenu
-from customwidgets.delegates import CommentsDelegate
+from customwidgets.delegates import CommentsDelegate, ProblemsDelegate
 from screens.comment_input import InputPopup
 from datastructures.settings import settings
 from qstyles import STYLE
@@ -72,13 +72,18 @@ class Tracker:
         self.comments_model = CommentsModel(self.db)
 
         self.all_topics = self.topics_model.getTopics()
-        self.all_problems = self.problems_model.getProblems()
 
         self.gui.setCommentsModel(self.comments_model)
-        self.gui.setSettingsModel(self.topics_model)
+        self.gui.setTopicsModel(self.topics_model)
+        self.gui.setProblemsModel(self.problems_model)
 
         self.comments_delegate = CommentsDelegate()
-        self.gui.commentsview.tableview.setItemDelegate(self.comments_delegate)
+        self.problems_delegate = ProblemsDelegate()
+
+        self.gui.commentsview.table_group.setItemDelegate(self.comments_delegate)
+        self.gui.settingsview.problem_options.table_view.setItemDelegate(
+            self.problems_delegate
+        )
 
         self.topics_model.modelReset.connect(self.on_topics_changed)
         self.topics_model.dataChanged.connect(self.on_topics_changed)
@@ -90,11 +95,12 @@ class Tracker:
         self.topics_model.rowsRemoved.connect(self.on_problems_changed)
 
         # comments viewer btns
-        self.gui.commentsview.add_record.clicked.connect(self.showInputWin)
-        self.gui.commentsview.delete_btn.clicked.connect(self.deleteComment)
+        self.gui.commentsview.table_group.new_comment.clicked.connect(self.showInputWin)
+        self.gui.commentsview.table_group.del_btn.clicked.connect(self.deleteComment)
         # settings
         self.gui.topic_menu.new_topic.addbtn.clicked.connect(self.saveTopic)
-        self.gui.settingsview.topic_options.deletebtn.clicked.connect(self.deleteTopic)
+        self.gui.problem_menu.new_problem.addbtn.clicked.connect(self.from_problemenu)
+        self.gui.settingsview.topic_options.del_btn.clicked.connect(self.deleteTopic)
 
         self.tray_menu = TrayMenu()
         self.tray_menu.addlog.clicked.connect(self.input_window.showNormal)
@@ -125,7 +131,7 @@ class Tracker:
 
     def _problemID(self, problem: str):
         """get problem id by it's statement"""
-        for p in self.all_problems:
+        for p in self.problems_model.getProblems():
             if p.problem == problem:
                 return p.problem_id
 
@@ -157,6 +163,7 @@ class Tracker:
     def onStartup(self):
         """get things running right away"""
         self.comments_delegate.setTopics(self.all_topics)
+        self.problems_delegate.setTopics(self.all_topics)
         self._checkWeekend()
         self.onTimeout()
 
@@ -184,7 +191,8 @@ class Tracker:
 
     def getUnsolvedProblems(self):
         """get problems that not been solved"""
-        return [problem for problem in self.all_problems if not problem.solved]
+        all_problems = self.problems_model.getProblems()
+        return [problem for problem in all_problems if not problem.solved]
 
     def setCurrentTopics(self, current_topics: list):
         """add current topics to the input window"""
@@ -214,9 +222,9 @@ class Tracker:
     def showAddTopic(self, *args):
         """show the settings window for adding new topic"""
         logger.info(f"showAddTopic called with: {args}")
-        self.gui.switchToEntries()
         self.gui.showMaximized()
-        self.gui.commentsview.add_topic.click()
+        self.gui.switchToEntries()
+        self.gui.commentsview.table_group.new_topic.click()
 
     def showInputWin(self):
         """popup input window"""
@@ -225,21 +233,35 @@ class Tracker:
         else:
             self.input_window.showNormal()
 
-    def handle_problem(self, timestamp: str, topic_id: int, new: str, solved: str):
+    def from_problemenu(self):
+        """add new problem when 'add' from problem menu is triggered"""
+        time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
+        new_problem = self.gui.problem_menu.problem()
+        topic_title = self.gui.problem_menu.topic()
+        topic_id = self._topicIDByTitle(topic_title)
+        self.gui.problem_menu.on_done()
+
+        self.handle_problem(time_now, topic_id, new_problem, "")
+
+    def handle_problem(
+        self,
+        timestamp: str,
+        topic_id: int,
+        new_problem: str,
+        solved: str,
+    ):
         """create new problem if does not exists, mark old as solved if exists"""
 
         changed = False
 
-        if new:
-            changed = self.problems_model.newProblem(timestamp, topic_id, new)
+        if new_problem:
+            changed = self.problems_model.newProblem(timestamp, topic_id, new_problem)
 
         if solved and (solved != SOLVED_PLACEHOLDER):
             solved_id = self._problemID(solved)
             changed = self.problems_model.markSolved(solved_id)
 
         if changed:  # if problems table changed
-
-            self.all_problems = self.problems_model.getProblems()
 
             problems = self.getUnsolvedProblems()
             self.input_window.setProblems(problems)
@@ -262,7 +284,7 @@ class Tracker:
 
     def deleteComment(self):
         """delete comment record from database"""
-        selected = {idx.row() for idx in self.gui.commentsview.sRows()}
+        selected = self.gui.commentsview.sRows()
         if selected:
             logs_len = len(selected)
             if self.gui.ask(
@@ -272,8 +294,10 @@ class Tracker:
                     row = index.row()
                     self.comments_model.deleteRowFromTable(row)
                     logger.info(f"Activity at {row} deleted from 'comments' table")
+
                     # apply changes
                 self.comments_model.select()
+                self.gui.commentsview.table_group.del_btn.hide()
 
     def saveTopic(self):
         """set topic details in settings to database"""
@@ -283,7 +307,7 @@ class Tracker:
         span = self.gui.topic_menu.getSpan()
 
         if self.topics_model.newTopic(time_now, topic, start, span):
-            self.gui.topic_menu.clearInputs()
+            self.gui.topic_menu.on_done()
             self.gui.topic_menu.addSpan()
             # show changes right away
             self.onTimeout()
@@ -315,6 +339,7 @@ class Tracker:
         show message
         """
         topics = self.getCurrentTopics()
+        self.gui.problem_menu.setTopics(self.all_topics, current=topics)
         # if notifications are enabled
         if self.show_notifications:
             # if not all topics are enabled
@@ -366,18 +391,19 @@ class Tracker:
         self.setCurrentTRange(topics)
         self.setCurrentTopics(topics)
 
+        # select to reflect any new changes
         self.comments_model.select()
+        self.problems_model.select()
 
         self.comments_delegate.setTopics(self.all_topics)
+        self.problems_delegate.setTopics(self.all_topics)
+        self.gui.problem_menu.setTopics(self.all_topics, current=topics)
 
     def on_problems_changed(self, *args, **kwargs):
         logger.info("Data changed in 'problems' model")
-        self.all_problems = self.problems_model.getProblems()
 
         problems = self.getUnsolvedProblems()
         self.input_window.setProblems(problems)
-
-        # self.problems_delegate.setTopics(self.all_topics)
 
 
 if __name__ == "__main__":
