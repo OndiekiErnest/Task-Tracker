@@ -9,10 +9,10 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QVBoxLayout,
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
-from customwidgets.groupboxes import NewTopic
-from constants import TIME_UNITS
+from customwidgets.groupboxes import NewTopic, NewProblem
+from constants import TIME_UNITS, SHOW_FILE_ICON, BACKUP_ICON
 
 
 class TrayMenu(QMenu):
@@ -87,6 +87,11 @@ class NewTopicMenu(QMenu):
         newtopic.setDefaultWidget(self.new_topic)
         self.addAction(newtopic)
 
+    def on_done(self):
+        """clear and hide"""
+        self.clearInputs()
+        self.hide()
+
     def clearInputs(self):
         """clear input fields"""
         self.new_topic.topic_title.child.clear()
@@ -112,3 +117,51 @@ class NewTopicMenu(QMenu):
 
         time = self.new_topic.start_time.child.time().addSecs(span * 60)
         self.new_topic.start_time.child.setTime(time)
+
+
+class NewProblemMenu(QMenu):
+    """Menu class to add new problem"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setMinimumWidth(450)
+
+        self.new_problem = NewProblem()
+
+        newproblem = QWidgetAction(self)
+        newproblem.setDefaultWidget(self.new_problem)
+        self.addAction(newproblem)
+
+    def on_done(self):
+        """clear and hide"""
+        self.clear()
+        self.hide()
+
+    def problem(self):
+        """problem title"""
+        return self.new_problem.problem_title.child.text()
+
+    def topic(self):
+        """related topic"""
+        return self.new_problem.topics.child.currentText()
+
+    def setTopics(self, topics, current=None):
+        self.new_problem.setTopics(topics, current=current)
+
+    def clear(self):
+        """clear fields"""
+        self.new_problem.problem_title.child.clear()
+
+
+class TableMoreMenu(QMenu):
+    """Menu for the 'More' btn in tables"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.show_file = QAction(QIcon(SHOW_FILE_ICON), "Database Location")
+        self.backup_file = QAction(QIcon(BACKUP_ICON), "Backup Database")
+
+        self.addAction(self.show_file)
+        self.addAction(self.backup_file)
