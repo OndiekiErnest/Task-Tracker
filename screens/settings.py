@@ -4,9 +4,11 @@ import logging
 from PyQt6.QtWidgets import QScrollArea, QWidget, QGroupBox, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt
 from customwidgets.frames import Line
-from customwidgets.groupboxes import NamedLineEditV, DisableNotifs, TopicOptions
+from customwidgets.groupboxes import NamedLineEditV, DisableNotifs
+from customwidgets.searchtables import ProblemsTableview, TopicsTableview
+from customwidgets.delegates import TopicsDelegate
 from customwidgets.comboboxes import TimeUnits
-from models import TopicsModel
+from models import TopicsModel, ProblemsModel
 from datastructures.settings import settings
 
 
@@ -71,18 +73,37 @@ class SettingsWindow(QScrollArea):
 
         self.setWidget(swidget)
 
-        # widgets
-        # topics viewer and settings
-        self.topic_options = TopicOptions()
-
         # notifications group
         self.notifs_options = NotificationsSettings()
 
+        # widgets
+        # topics viewer and settings
+        self.topic_options = TopicsTableview("Topics")
+        self.topic_options.setItemDelegate(TopicsDelegate())
+
+        # problems section
+        self.problem_options = ProblemsTableview("Problems")
+
+        layout.addWidget(self.notifs_options)
+        layout.addWidget(Line())
         layout.addWidget(self.topic_options)
         layout.addWidget(Line())
-        layout.addWidget(self.notifs_options)
+        layout.addWidget(self.problem_options)
 
-    def setModel(self, model: TopicsModel):
+    def setTopicsModel(self, model: TopicsModel):
         """set model for topics"""
         logger.info(f"Model set to '{model}'")
         self.topic_options.setModel(model)
+
+        self.topic_options.hideColumn(model.fieldIndex("id"))
+        self.topic_options.hideColumn(model.fieldIndex("timestamp"))
+        self.topic_options.hideColumn(model.fieldIndex("enabled"))
+
+    def setProblemsModel(self, model: ProblemsModel):
+        """set model for problems"""
+        logger.info(f"Model set to '{model}'")
+        self.problem_options.setModel(model)
+
+        self.problem_options.hideColumn(model.fieldIndex("id"))
+        self.problem_options.hideColumn(model.fieldIndex("timestamp"))
+        self.problem_options.hideColumn(model.fieldIndex("solved"))
