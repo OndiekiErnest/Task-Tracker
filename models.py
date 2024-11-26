@@ -31,6 +31,7 @@ PROBLEMS_HEADERS = {
     "timestamp": "Date Added",
     "problem": "Problem",
     "solved": "Solved",
+    "topic_id": "Related Topic",
 }
 
 
@@ -66,14 +67,17 @@ class TopicsModel(QSqlTableModel):
             logger.error(
                 f"Table 'topics' was not created:\n{self._query.lastError().driverText()}"
             )
-        # change header titles
-        for k, v in TOPICS_HEADERS.items():
-            idx = self.fieldIndex(k)
-            self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+
         # edit strategy
         self.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
         # sort before select
         self.setSort(self.fieldIndex("start"), Qt.SortOrder.AscendingOrder)
+
+        # change header titles
+        for k, v in TOPICS_HEADERS.items():
+            idx = self.fieldIndex(k)
+            self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+
         # select
         self.select()
 
@@ -124,26 +128,27 @@ class TopicsModel(QSqlTableModel):
 
     def newTopic(self, time_now: str, topic: str, start: str, span: int):
         """add new topic to table"""
-        self._query.prepare(
-            """
-            INSERT INTO topics (timestamp, topic, start, span)
-            VALUES (?, ?, ?, ?)
-            """
-        )
-        self._query.addBindValue(time_now)
-        self._query.addBindValue(topic)
-        self._query.addBindValue(start)
-        self._query.addBindValue(span)
-
-        if self._query.exec():
-            self.select()
-            logger.info(f"Set topic '{topic}'")
-            return True
-        else:
-            logger.error(
-                f"DB error setting topic: {self._query.lastError().driverText()}"
+        if all((time_now, topic, start, span)):
+            self._query.prepare(
+                """
+                INSERT INTO topics (timestamp, topic, start, span)
+                VALUES (?, ?, ?, ?)
+                """
             )
-            return False
+            self._query.addBindValue(time_now)
+            self._query.addBindValue(topic)
+            self._query.addBindValue(start)
+            self._query.addBindValue(span)
+
+            if self._query.exec():
+                self.select()
+                logger.info(f"Set topic '{topic}'")
+                return True
+            else:
+                logger.error(
+                    f"DB error setting topic: {self._query.lastError().driverText()}"
+                )
+                return False
 
 
 class CommentsModel(QSqlRelationalTableModel):
@@ -218,7 +223,7 @@ class CommentsModel(QSqlRelationalTableModel):
             return False
 
 
-class ProblemsModel(QSqlTableModel):
+class ProblemsModel(QSqlRelationalTableModel):
     """table model class that reads and writes problems to a local file database"""
 
     def __init__(self, db, **kwargs):
@@ -248,14 +253,23 @@ class ProblemsModel(QSqlTableModel):
             logger.error(
                 f"Table 'problems' was not created:\n{self._query.lastError().driverText()}"
             )
-        # change header titles
-        for k, v in PROBLEMS_HEADERS.items():
-            idx = self.fieldIndex(k)
-            self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+
+        # set relation
+        self.setRelation(
+            self.fieldIndex("topic_id"),
+            QSqlRelation("topics", "id", "topic"),
+        )
+
         # edit strategy
         self.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
         # sort before select
         self.setSort(self.fieldIndex("timestamp"), Qt.SortOrder.AscendingOrder)
+
+        # change header titles
+        for k, v in PROBLEMS_HEADERS.items():
+            idx = self.fieldIndex(k)
+            self.setHeaderData(idx, Qt.Orientation.Horizontal, v)
+
         # select
         self.select()
 
