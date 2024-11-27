@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QComboBox,
     QTimeEdit,
-    QSpinBox,
     QDateTimeEdit,
 )
 from PyQt6.QtCore import Qt, QRect, QModelIndex, QTime, QDateTime
@@ -181,21 +180,20 @@ class TopicsDelegate(QStyledItemDelegate):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # variables
-        self.time_col = 3
-        self.int_col = 4
+        self.starts_col = 3
+        self.ends_col = 4
 
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
-        if column == self.time_col:
+        if column == self.starts_col:
             # use QTimeEdit
             editor = QTimeEdit(parent)
             editor.setDisplayFormat("HH:mm:ss")  # set time format
 
-        elif column == self.int_col:
+        elif column == self.ends_col:
             # use QSpinBox
-            editor = QSpinBox(parent)
-            editor.setRange(1, 1440)
-            editor.setSuffix(" mins")
+            editor = QTimeEdit(parent)
+            editor.setDisplayFormat("HH:mm:ss")  # set time format
 
         else:
             # default to base class implementation for other columns
@@ -205,33 +203,35 @@ class TopicsDelegate(QStyledItemDelegate):
 
     def setEditorData(self, editor, index: QModelIndex):
         column = index.column()
-        if column == self.time_col:
+        if column == self.starts_col:
             # set data for QTimeEdit
-            time_str = index.data(Qt.ItemDataRole.EditRole)
-            time = QTime.fromString(time_str, "HH:mm:ss")
+            starts_str = index.data(Qt.ItemDataRole.EditRole)
+            time = QTime.fromString(starts_str, "HH:mm:ss")
             editor.setTime(time)
 
-        elif column == self.int_col:
+        elif column == self.ends_col:
             # set data for QSpinBox
-            span_int = index.data(Qt.ItemDataRole.EditRole)
-            editor.setValue(span_int)
+            ends_str = index.data(Qt.ItemDataRole.EditRole)
+            time = QTime.fromString(ends_str, "HH:mm:ss")
+            editor.setTime(time)
         else:
             super().setEditorData(editor, index)
 
     def setModelData(self, editor, model, index: QModelIndex):
         column = index.column()
-        if column == self.time_col:
-            # Save data from QTimeEdit
-            time = editor.time()
-            time_str = time.toString("HH:mm:ss")
-            model.setData(index, time_str, Qt.ItemDataRole.EditRole)
-            logger.info(f"Topic start time changed to: {time!r}")
+        if column == self.starts_col:
+            # save data from QTimeEdit
+            starts = editor.time()
+            starts_str = starts.toString("HH:mm:ss")
+            model.setData(index, starts_str, Qt.ItemDataRole.EditRole)
+            logger.info(f"Topic start time changed to: {starts_str!r}")
 
-        elif column == self.int_col:
-            # Save data from QSpinBox
-            span_int = editor.value()
-            model.setData(index, span_int, Qt.ItemDataRole.EditRole)
-            logger.info(f"Topic span changed to: {span_int}")
+        elif column == self.ends_col:
+            # save data from QTimeEdit
+            ends = editor.time()
+            ends_str = ends.toString("HH:mm:ss")
+            model.setData(index, ends_str, Qt.ItemDataRole.EditRole)
+            logger.info(f"Topic ends changed to: {ends_str}")
 
         else:
             super().setModelData(editor, model, index)
