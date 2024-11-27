@@ -37,8 +37,8 @@ class InputPopup(QWidget):
         layout.addWidget(self.prompt)
 
         # form widgets
-        self.topic = NamedCombobox("Current Topic")
-        self.topic.child.currentTextChanged.connect(self.enableSubmit)
+        self.topics = NamedCombobox("Current Topic")
+        self.topics.child.currentTextChanged.connect(self.enableSubmit)
 
         self.comments = NamedPlainTextEdit("Describe the activity")
         self.comments.child.setPlaceholderText(placeholder)
@@ -53,7 +53,7 @@ class InputPopup(QWidget):
         self.submit.setMinimumWidth(60)
         self.submit.setDisabled(True)
 
-        layout.addWidget(self.topic)
+        layout.addWidget(self.topics)
         layout.addWidget(self.comments)
         layout.addWidget(self.solved_problem)
         layout.addWidget(self.problem)
@@ -81,7 +81,7 @@ class InputPopup(QWidget):
     def enableSubmit(self, txt=None):
         """enable/disable submit button"""
         topic, comments = (
-            self.topic.child.currentText(),
+            self.topics.child.currentText(),
             self.comments.child.toPlainText(),
         )
         if all((topic, comments)):
@@ -89,9 +89,9 @@ class InputPopup(QWidget):
         else:
             self.submit.setDisabled(True)
 
-    def setTopicText(self, title):
+    def setTopicText(self, title: str):
         """update topic title"""
-        self.topic.child.setText(title)
+        self.topics.child.setCurrentText(title)
 
     def setProblems(self, problems):
         """set problem titles"""
