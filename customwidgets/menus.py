@@ -91,6 +91,7 @@ class NewTopicMenu(QMenu):
 
     def on_done(self):
         """clear and hide"""
+        self.new_topic.notifs.setChecked(True)
         self.clearInputs()
         self.hide()
         self.addSpan()
@@ -109,6 +110,10 @@ class NewTopicMenu(QMenu):
     def getEnds(self):
         """return ends str (HH:mm)"""
         return self.new_topic.end_time.child.time().toString()
+
+    def showNotifications(self):
+        """return 1=show or 0=don't show"""
+        return int(self.new_topic.notifs.isChecked())
 
     def addSpan(self):
         """set end time as the new start time"""

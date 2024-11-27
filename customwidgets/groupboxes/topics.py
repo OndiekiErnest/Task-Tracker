@@ -35,8 +35,9 @@ class NewTopic(QGroupBox):
         self.end_time = NamedTimeEdit("End Time")
         self.end_time.child.timeChanged.connect(self.toggleSubmitBtn)
 
-        # add widget to set if notifications should be enabled
+        # set if notifications should be enabled
         self.notifs = NotificationCheckBox("Show notifications")
+        self.notifs.setChecked(True)
 
         self.addbtn = QPushButton("Submit")
         self.addbtn.setIcon(QIcon(SUBMIT_ICON))

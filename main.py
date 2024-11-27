@@ -305,8 +305,9 @@ class Tracker:
         topic = self.gui.topic_menu.getTopic()
         start = self.gui.topic_menu.getStart()
         ends = self.gui.topic_menu.getEnds()
+        show_notifs = self.gui.topic_menu.showNotifications()
 
-        if self.topics_model.newTopic(time_now, topic, start, ends):
+        if self.topics_model.newTopic(time_now, topic, start, ends, show_notifs):
             self.gui.topic_menu.on_done()
             # show changes right away
             self.onTimeout()

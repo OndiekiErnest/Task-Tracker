@@ -131,19 +131,20 @@ class TopicsModel(QSqlTableModel):
         topics_list.sort(key=lambda t: t.starts)
         return topics_list
 
-    def newTopic(self, time_now: str, topic: str, start: str, ends: str):
+    def newTopic(self, time_now: str, topic: str, start: str, ends: str, enabled: int):
         """add new topic to table"""
         if all((time_now, topic, start, ends)):
             self._query.prepare(
                 """
-                INSERT INTO topics (timestamp, topic, start, ends)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO topics (timestamp, topic, start, ends, enabled)
+                VALUES (?, ?, ?, ?, ?)
                 """
             )
             self._query.addBindValue(time_now)
             self._query.addBindValue(topic)
             self._query.addBindValue(start)
             self._query.addBindValue(ends)
+            self._query.addBindValue(enabled)
 
             if self._query.exec():
                 self.select()
