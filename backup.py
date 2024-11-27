@@ -1,7 +1,6 @@
 import os
 from shutil import copy2
 from PyQt6.QtCore import QObject, QThreadPool, QRunnable, pyqtSignal
-from constants import APP_DB
 
 
 class FileTransferSignals(QObject):
@@ -12,25 +11,28 @@ class FileTransferSignals(QObject):
     done = pyqtSignal(str)
 
 
-class BackupWorker(QRunnable):
-    """backup thread"""
+class FileCopyWorker(QRunnable):
+    """file copy runnable"""
 
-    __slots__ = ("output_dir", "signals")
+    __slots__ = ("dest_dir", "signals")
 
-    def __init__(self, output_dir: str):
+    def __init__(self, src: str, dest_dir: str):
         super().__init__()
         self.setAutoDelete(True)
 
-        self.output_dir = output_dir
+        self.src = src
+        self.dest_dir = dest_dir
 
         self.signals = FileTransferSignals()
 
     def run(self):
-        backup_file = os.path.join(self.output_dir, os.path.basename(APP_DB))
+        dest_file = os.path.join(self.dest_dir, os.path.basename(self.src))
 
         try:
-            copy2(APP_DB, backup_file)
-            self.signals.done.emit(f"Backup saved: '{backup_file}'")
+            # passing a file as dest overwrites existing
+            # passing a folder as dest raises error if file exists
+            copy2(self.src, dest_file)
+            self.signals.done.emit(f"'{self.src}' copied to '{dest_file}'")
 
         except Exception as e:
             self.signals.errored.emit(str(e))
