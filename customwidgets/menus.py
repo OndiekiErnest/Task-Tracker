@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from customwidgets.groupboxes import NewTopic, NewProblem
-from constants import TIME_UNITS, SHOW_FILE_ICON, BACKUP_ICON
+from constants import SHOW_FILE_ICON, BACKUP_ICON
 
 
 class TrayMenu(QMenu):
@@ -81,6 +81,8 @@ class NewTopicMenu(QMenu):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.setMinimumWidth(450)
+
         self.new_topic = NewTopic()
 
         newtopic = QWidgetAction(self)
@@ -91,6 +93,7 @@ class NewTopicMenu(QMenu):
         """clear and hide"""
         self.clearInputs()
         self.hide()
+        self.addSpan()
 
     def clearInputs(self):
         """clear input fields"""
@@ -100,23 +103,21 @@ class NewTopicMenu(QMenu):
         return self.new_topic.topic_title.child.text()
 
     def getStart(self):
-        # "HH:mm"
+        """HH:mm"""
         return self.new_topic.start_time.child.time().toString()
 
-    def getSpan(self):
-        """span in unit"""
-        unit = self.new_topic.duration_unit.currentText()
-        span = int(self.new_topic.duration.child.text()) * TIME_UNITS[unit]
-        return span
+    def getEnds(self):
+        """return ends str (HH:mm)"""
+        return self.new_topic.end_time.child.time().toString()
 
     def addSpan(self):
-        """add span to current set time"""
-        unit = self.new_topic.duration_unit.currentText()
-        # span in mins
-        span = int(self.new_topic.duration.child.text()) * TIME_UNITS[unit]
+        """set end time as the new start time"""
+        # QTime
+        ends = self.new_topic.end_time.child.time()
 
-        time = self.new_topic.start_time.child.time().addSecs(span * 60)
-        self.new_topic.start_time.child.setTime(time)
+        self.new_topic.start_time.child.setTime(ends)
+        # add 5 minutes to the ends
+        self.new_topic.end_time.child.setTime(ends.addSecs(5 * 60))
 
 
 class NewProblemMenu(QMenu):
