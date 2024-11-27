@@ -1,6 +1,5 @@
 """topic adder widget"""
 
-import logging
 from PyQt6.QtWidgets import (
     QGroupBox,
     QPushButton,
@@ -9,13 +8,10 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from customwidgets.comboboxes import TimeUnits
+from customwidgets.checkboxes import NotificationCheckBox
 from constants import SUBMIT_ICON
-from .lineedits import NamedLineEdit, NamedLineEditV
+from .lineedits import NamedLineEdit
 from .timeedits import NamedTimeEdit
-
-
-logger = logging.getLogger(__name__)
 
 
 class NewTopic(QGroupBox):
@@ -31,36 +27,37 @@ class NewTopic(QGroupBox):
         datetimeslayout = QHBoxLayout()
 
         self.topic_title = NamedLineEdit("Topic Title")
-        self.topic_title.child.textChanged.connect(self.enableSubmitBtn)
+        self.topic_title.child.textChanged.connect(self.toggleSubmitBtn)
 
-        self.start_time = NamedTimeEdit("Daily Start Time")
+        self.start_time = NamedTimeEdit("Start Time")
+        self.start_time.child.timeChanged.connect(self.toggleSubmitBtn)
 
-        self.duration = NamedLineEditV("Topic Span")
-        self.duration.child.textChanged.connect(self.enableSubmitBtn)
+        self.end_time = NamedTimeEdit("End Time")
+        self.end_time.child.timeChanged.connect(self.toggleSubmitBtn)
 
-        self.duration_unit = TimeUnits()
+        # add widget to set if notifications should be enabled
+        self.notifs = NotificationCheckBox("Show notifications")
 
         self.addbtn = QPushButton("Submit")
         self.addbtn.setIcon(QIcon(SUBMIT_ICON))
         self.addbtn.setDisabled(True)
 
         datetimeslayout.addWidget(self.start_time)
-        datetimeslayout.addWidget(self.duration)
-        datetimeslayout.addWidget(self.duration_unit)
+        datetimeslayout.addWidget(self.end_time)
 
         layout.addWidget(self.topic_title)
         layout.addLayout(datetimeslayout)
+        layout.addWidget(self.notifs)
         layout.addWidget(self.addbtn, alignment=Qt.AlignmentFlag.AlignRight)
 
-    def enableSubmitBtn(self):
-        """if all fields have data"""
-        topic, start, span = (
+    def toggleSubmitBtn(self):
+        """enable if all fields have data"""
+        topic, start, ends = (
             self.topic_title.child.text(),
             self.start_time.child.time().toString(),
-            self.duration.child.text(),
+            self.end_time.child.time().toString(),
         )
-        if all((topic, start, span)) and int(span):  # span != 0
+        if all((topic, start, ends)) and (start != ends):
             self.addbtn.setEnabled(True)
-            logger.info("New topic is ready to be submitted")
         else:
             self.addbtn.setDisabled(True)
