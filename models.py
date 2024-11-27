@@ -1,5 +1,6 @@
 """PyQt6 models"""
 
+import time
 import logging
 from datetime import datetime
 from PyQt6.QtCore import Qt, QSortFilterProxyModel
@@ -12,7 +13,6 @@ from PyQt6.QtSql import (
 from datastructures.datas import ProblemData, TopicData
 from constants import TIMEZONE
 
-
 logger = logging.getLogger(__name__)
 
 COMMENTS_HEADERS = {
@@ -23,8 +23,8 @@ COMMENTS_HEADERS = {
 
 TOPICS_HEADERS = {
     "topic": "Topic Title",
-    "start": "Topic Start (daily)",
-    "span": "Span (in minutes)",
+    "start": "Topic Start",
+    "ends": "Topic End",
 }
 
 PROBLEMS_HEADERS = {
@@ -43,7 +43,7 @@ class TopicsModel(QSqlTableModel):
         # create table if non-existent
         self._query = QSqlQuery(db=db)
         # start is time in the format HH:MM
-        # span is number in seconds
+        # ends is time in the format HH:MM
         # enabled is number; enabled=1, disabled=0
         created = self._query.exec(
             """
@@ -52,7 +52,7 @@ class TopicsModel(QSqlTableModel):
                 timestamp DATETIME,
                 topic TEXT NOT NULL UNIQUE,
                 start TEXT NOT NULL,
-                span INTEGER NOT NULL,
+                ends TEXT NOT NULL,
                 enabled INTEGER NOT NULL DEFAULT 1
             )
             """
@@ -85,6 +85,7 @@ class TopicsModel(QSqlTableModel):
         """prepare topics, and their details"""
         # get the number of rows
         row_count = self.rowCount()
+        now_dt = datetime.now(tz=TIMEZONE)
 
         # create a list to store rows as tuples
         topics_list: list[TopicData] = []
@@ -107,15 +108,19 @@ class TopicsModel(QSqlTableModel):
                         # title
                         topic_kw["title"] = value
                     case 3:
-                        dt = datetime.now(tz=TIMEZONE)
-                        hr, mins, secs = value.split(":")
-                        topic_kw["starts"] = dt.replace(
-                            hour=int(hr),
-                            minute=int(mins),
-                            second=int(secs),
+                        tm = time.strptime(value, "%H:%M:%S")
+                        topic_kw["starts"] = now_dt.replace(
+                            hour=tm.tm_hour,
+                            minute=tm.tm_min,
+                            second=tm.tm_sec,
                         )
                     case 4:
-                        topic_kw["span"] = int(value)
+                        tm = time.strptime(value, "%H:%M:%S")
+                        topic_kw["ends"] = now_dt.replace(
+                            hour=tm.tm_hour,
+                            minute=tm.tm_min,
+                            second=tm.tm_sec,
+                        )
                     case 5:
                         topic_kw["enabled"] = bool(value)
                     case _:
@@ -126,19 +131,19 @@ class TopicsModel(QSqlTableModel):
         topics_list.sort(key=lambda t: t.starts)
         return topics_list
 
-    def newTopic(self, time_now: str, topic: str, start: str, span: int):
+    def newTopic(self, time_now: str, topic: str, start: str, ends: str):
         """add new topic to table"""
-        if all((time_now, topic, start, span)):
+        if all((time_now, topic, start, ends)):
             self._query.prepare(
                 """
-                INSERT INTO topics (timestamp, topic, start, span)
+                INSERT INTO topics (timestamp, topic, start, ends)
                 VALUES (?, ?, ?, ?)
                 """
             )
             self._query.addBindValue(time_now)
             self._query.addBindValue(topic)
             self._query.addBindValue(start)
-            self._query.addBindValue(span)
+            self._query.addBindValue(ends)
 
             if self._query.exec():
                 self.select()

@@ -10,7 +10,7 @@ from PyQt6.QtGui import QIcon
 from humanize import naturaltime
 from gui import MainWindow
 from models import CommentsModel, TopicsModel, ProblemsModel
-from constants import APP_DB, APP_ICON, TIMEZONE, TIME_UNITS, SOLVED_PLACEHOLDER
+from constants import APP_DB, APP_ICON, TIMEZONE, SOLVED_PLACEHOLDER
 from customwidgets.menus import TrayMenu
 from customwidgets.delegates import CommentsDelegate, ProblemsDelegate
 from screens.comment_input import InputPopup
@@ -137,7 +137,7 @@ class Tracker:
 
     def _setNotificationsInterval(self):
         """update notification interval"""
-        after = settings["notify_after"] * TIME_UNITS[settings["notify_units"]]
+        after = self.gui.settingsview.notifs_options.duration_setter.minutes()
         logger.info(f"Interval set to: {after} minutes")
         # convert to millisecs
         self.notification_timer.setInterval(after * 60000)
@@ -196,7 +196,7 @@ class Tracker:
 
     def setCurrentTopics(self, current_topics: list):
         """add current topics to the input window"""
-        self.input_window.topic.addItems(current_topics)
+        self.input_window.topics.addItems(t.title for t in current_topics)
 
     def setCurrentTRange(self, current_topics: list):
         """set current time range on the tray menu"""
@@ -269,7 +269,7 @@ class Tracker:
     def logComment(self):
         """add comment record to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
-        topic_title = self.input_window.topic.child.currentText()
+        topic_title = self.input_window.topics.child.currentText()
         topic_id = self._topicIDByTitle(topic_title)
         comments = self.input_window.comments.child.toPlainText()
 
@@ -304,11 +304,10 @@ class Tracker:
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic = self.gui.topic_menu.getTopic()
         start = self.gui.topic_menu.getStart()
-        span = self.gui.topic_menu.getSpan()
+        ends = self.gui.topic_menu.getEnds()
 
-        if self.topics_model.newTopic(time_now, topic, start, span):
+        if self.topics_model.newTopic(time_now, topic, start, ends):
             self.gui.topic_menu.on_done()
-            self.gui.topic_menu.addSpan()
             # show changes right away
             self.onTimeout()
 
