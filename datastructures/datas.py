@@ -1,7 +1,7 @@
 """data structures"""
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(slots=True, kw_only=True)
@@ -12,12 +12,8 @@ class TopicData:
     created: datetime
     title: str
     starts: datetime
-    span: int
     enabled: bool
-    ends: datetime = field(init=False)
-
-    def __post_init__(self):
-        self.ends = self.starts + timedelta(minutes=self.span)
+    ends: datetime
 
 
 @dataclass(slots=True, kw_only=True)
