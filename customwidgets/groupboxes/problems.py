@@ -1,6 +1,5 @@
 """custom QGroupBox classes"""
 
-import logging
 from PyQt6.QtWidgets import (
     QGroupBox,
     QPushButton,
@@ -11,9 +10,6 @@ from PyQt6.QtGui import QIcon
 from constants import SUBMIT_ICON
 from .lineedits import NamedLineEdit
 from .comboboxes import NamedCombobox
-
-
-logger = logging.getLogger(__name__)
 
 
 class NewProblem(QGroupBox):
@@ -49,13 +45,12 @@ class NewProblem(QGroupBox):
             )
         ):
             self.addbtn.setEnabled(True)
-            logger.info("New Problem is ready to be submitted")
         else:
             self.addbtn.setDisabled(True)
 
     def setTopics(self, topics, current: list = None):
         """add topics to drop-down menu"""
-        self.topics.addItems((t.title for t in topics))
+        self.topics.addItems(t.title for t in topics)
         if current:
             title = current[0].title
             self.topics.setCurrentTopic(title)
