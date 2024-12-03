@@ -34,3 +34,4 @@ class NotesWindow(QWidget):
         self.table_group.setModel(model)
 
         self.table_group.hideColumn(model.fieldIndex("id"))
+        self.table_group.hideColumn(model.fieldIndex("timestamp"))

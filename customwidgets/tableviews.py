@@ -30,11 +30,11 @@ class NotesTable(Tableview):
         self.verticalHeader().setVisible(False)
         self.setShowGrid(False)
 
-        self.col_widths = (0.16, 0.3, 0.52)  # percentages for each column
+        self.col_widths = (0.3, 0.68)  # percentages for each column
 
     def set_column_widths(self):
         table_width = self.width()
-        for index, percentage in enumerate(self.col_widths, start=1):
+        for index, percentage in enumerate(self.col_widths, start=2):
             # apply % width
             self.setColumnWidth(index, int(table_width * percentage))
 

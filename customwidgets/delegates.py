@@ -6,9 +6,8 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QComboBox,
     QTimeEdit,
-    QDateTimeEdit,
 )
-from PyQt6.QtCore import Qt, QRect, QModelIndex, QTime, QDateTime
+from PyQt6.QtCore import Qt, QRect, QModelIndex, QTime
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,6 @@ class NotesDelegate(QStyledItemDelegate):
     ):
         super().__init__(*args, **kwargs)
         # variables
-        self.datetime_col = 1
         self.topic_col = 2
         self.note_col = 3
         # topics
@@ -78,12 +76,8 @@ class NotesDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index: QModelIndex):
         column = index.column()
-        if column == self.datetime_col:
-            # Use QDateTimeEdit
-            editor = QDateTimeEdit(parent)
-            editor.setDisplayFormat("yyyy-MM-dd HH:mm:ss")  # set time format
 
-        elif column == self.note_col:
+        if column == self.note_col:
             # Use QPlainTextEdit
             editor = QPlainTextEdit(parent)
             editor.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -104,12 +98,7 @@ class NotesDelegate(QStyledItemDelegate):
         column = index.column()
         value = index.data(Qt.ItemDataRole.EditRole)
 
-        if column == self.datetime_col:
-            # set data for QTimeEdit
-            qdt = QDateTime.fromString(value, "yyyy-MM-dd HH:mm:ss")
-            editor.setDateTime(qdt)
-
-        elif column == self.note_col:
+        if column == self.note_col:
             # set data for QPlainTextEdit
             editor.setPlainText(value)
 
@@ -125,14 +114,8 @@ class NotesDelegate(QStyledItemDelegate):
 
     def setModelData(self, editor, model, index: QModelIndex):
         column = index.column()
-        if column == self.datetime_col:
-            # save data from QTimeEdit
-            qdatetime = editor.dateTime()
-            datetime_str = qdatetime.toString("yyyy-MM-dd HH:mm:ss")
-            model.setData(index, datetime_str, Qt.ItemDataRole.EditRole)
-            logger.info(f"Notes timestamp changed to: {datetime_str!r}")
 
-        elif column == self.note_col:
+        if column == self.note_col:
             # save data from QPlainTextEdit
             text = editor.toPlainText()
             model.setData(index, text, Qt.ItemDataRole.EditRole)
@@ -142,7 +125,7 @@ class NotesDelegate(QStyledItemDelegate):
             tpc_title = editor.currentText()
             tpc_id = self.topicID(tpc_title)
             model.setData(index, tpc_id, Qt.ItemDataRole.EditRole)
-            logger.info(f"Notes topic changed to: {tpc_title!r}")
+            logger.info(f"Notes topic updated to: {tpc_title!r}")
 
         else:
             super().setModelData(editor, model, index)
@@ -150,16 +133,7 @@ class NotesDelegate(QStyledItemDelegate):
     def updateEditorGeometry(self, editor, option, index: QModelIndex):
         column = index.column()
 
-        if column == self.datetime_col:
-            rect = QRect(
-                option.rect.left(),
-                option.rect.top(),
-                option.rect.width() + 15,
-                option.rect.height(),
-            )
-            editor.setGeometry(rect)
-
-        elif column == self.note_col:
+        if column == self.note_col:
             rect = QRect(
                 option.rect.left(),
                 option.rect.top(),
