@@ -19,7 +19,7 @@ def generate_topic():
     )
 
     # topic
-    topic = fake.unique.sentence(nb_words=8)
+    topic = fake.unique.sentence(nb_words=3)
 
     # start and end in the format "HH:MM"
     starts = fake.date_time_this_year()
@@ -58,7 +58,7 @@ def generate_problem():
         "%Y-%m-%d %H:%M:%S"
     )
 
-    problem = fake.unique.sentence(nb_words=30)
+    problem = fake.unique.sentence(nb_words=3)
 
     return timestamp, problem
 
