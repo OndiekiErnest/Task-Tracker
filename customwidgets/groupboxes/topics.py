@@ -53,12 +53,12 @@ class NewTopic(QGroupBox):
 
     def toggleSubmitBtn(self):
         """enable if all fields have data"""
-        topic, start, ends = (
+        topic, starts, ends = (
             self.topic_title.child.text(),
             self.start_time.child.time().toString(),
             self.end_time.child.time().toString(),
         )
-        if all((topic, start, ends)) and (start != ends):
+        if all((topic, starts, ends)) and (starts != ends):
             self.addbtn.setEnabled(True)
         else:
             self.addbtn.setDisabled(True)
