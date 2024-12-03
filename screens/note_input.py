@@ -40,9 +40,9 @@ class InputPopup(QWidget):
         self.topics = NamedCombobox("Current Topic")
         self.topics.child.currentTextChanged.connect(self.enableSubmit)
 
-        self.comments = NamedPlainTextEdit("Describe the activity")
-        self.comments.child.setPlaceholderText(placeholder)
-        self.comments.child.textChanged.connect(self.enableSubmit)
+        self.notes = NamedPlainTextEdit("Describe the activity")
+        self.notes.child.setPlaceholderText(placeholder)
+        self.notes.child.textChanged.connect(self.enableSubmit)
 
         self.solved_problem = NamedCombobox("Problem solved (Optional)")
 
@@ -54,7 +54,7 @@ class InputPopup(QWidget):
         self.submit.setDisabled(True)
 
         layout.addWidget(self.topics)
-        layout.addWidget(self.comments)
+        layout.addWidget(self.notes)
         layout.addWidget(self.solved_problem)
         layout.addWidget(self.problem)
         layout.addWidget(self.submit, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -80,11 +80,11 @@ class InputPopup(QWidget):
 
     def enableSubmit(self, txt=None):
         """enable/disable submit button"""
-        topic, comments = (
+        topic, notes = (
             self.topics.child.currentText(),
-            self.comments.child.toPlainText(),
+            self.notes.child.toPlainText(),
         )
-        if all((topic, comments)):
+        if all((topic, notes)):
             self.submit.setEnabled(True)
         else:
             self.submit.setDisabled(True)
@@ -102,7 +102,7 @@ class InputPopup(QWidget):
 
     def clear(self):
         """clear/reset fields"""
-        self.comments.child.clear()
+        self.notes.child.clear()
         self.problem.child.clear()
         # set the solved problem to placeholder
         self.solved_problem.child.setCurrentText(SOLVED_PLACEHOLDER)

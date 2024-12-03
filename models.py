@@ -13,17 +13,18 @@ from PyQt6.QtSql import (
 from datastructures.datas import ProblemData, TopicData
 from constants import TIMEZONE
 
+
 logger = logging.getLogger(__name__)
 
 COMMENTS_HEADERS = {
     "timestamp": "Date Added",
     "topic_id": "Topic Title",
-    "comment": "Comments",
+    "note": "Notes",
 }
 
 TOPICS_HEADERS = {
     "topic": "Topic Title",
-    "start": "Topic Start",
+    "starts": "Topic Start",
     "ends": "Topic End",
 }
 
@@ -42,7 +43,7 @@ class TopicsModel(QSqlTableModel):
 
         # create table if non-existent
         self._query = QSqlQuery(db=db)
-        # start is time in the format HH:MM
+        # starts is time in the format HH:MM
         # ends is time in the format HH:MM
         # enabled is number; enabled=1, disabled=0
         created = self._query.exec(
@@ -51,7 +52,7 @@ class TopicsModel(QSqlTableModel):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp DATETIME,
                 topic TEXT NOT NULL UNIQUE,
-                start TEXT NOT NULL,
+                starts TEXT NOT NULL,
                 ends TEXT NOT NULL,
                 enabled INTEGER NOT NULL DEFAULT 1
             )
@@ -71,7 +72,7 @@ class TopicsModel(QSqlTableModel):
         # edit strategy
         self.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
         # sort before select
-        self.setSort(self.fieldIndex("start"), Qt.SortOrder.AscendingOrder)
+        self.setSort(self.fieldIndex("starts"), Qt.SortOrder.AscendingOrder)
 
         # change header titles
         for k, v in TOPICS_HEADERS.items():
@@ -131,18 +132,18 @@ class TopicsModel(QSqlTableModel):
         topics_list.sort(key=lambda t: t.starts)
         return topics_list
 
-    def newTopic(self, time_now: str, topic: str, start: str, ends: str, enabled: int):
+    def newTopic(self, time_now: str, topic: str, starts: str, ends: str, enabled: int):
         """add new topic to table"""
-        if all((time_now, topic, start, ends)):
+        if all((time_now, topic, starts, ends)):
             self._query.prepare(
                 """
-                INSERT INTO topics (timestamp, topic, start, ends, enabled)
+                INSERT INTO topics (timestamp, topic, starts, ends, enabled)
                 VALUES (?, ?, ?, ?, ?)
                 """
             )
             self._query.addBindValue(time_now)
             self._query.addBindValue(topic)
-            self._query.addBindValue(start)
+            self._query.addBindValue(starts)
             self._query.addBindValue(ends)
             self._query.addBindValue(enabled)
 
@@ -157,8 +158,8 @@ class TopicsModel(QSqlTableModel):
                 return False
 
 
-class CommentsModel(QSqlRelationalTableModel):
-    """table model class that reads and writes comments to a local file database"""
+class NotesModel(QSqlRelationalTableModel):
+    """table model class that reads and writes notes to a local file database"""
 
     def __init__(self, db, **kwargs):
 
@@ -167,11 +168,11 @@ class CommentsModel(QSqlRelationalTableModel):
         # returns True if success
         created = self._query.exec(
             """
-            CREATE TABLE IF NOT EXISTS comments (
+            CREATE TABLE IF NOT EXISTS notes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp DATETIME,
                 topic_id INTEGER NOT NULL,
-                comment TEXT NOT NULL,
+                note TEXT NOT NULL,
                 FOREIGN KEY(topic_id) REFERENCES topics(id) ON DELETE CASCADE
             )
             """
@@ -180,11 +181,11 @@ class CommentsModel(QSqlRelationalTableModel):
         super().__init__(db=db, **kwargs)
         if created:
             # set table name
-            self.setTable("comments")
-            logger.info("Table created and set to 'comments'")
+            self.setTable("notes")
+            logger.info("Table created and set to 'notes'")
         else:
             logger.error(
-                f"Table 'comments' was not created:\n{self._query.lastError().driverText()}"
+                f"Table 'notes' was not created:\n{self._query.lastError().driverText()}"
             )
 
         # set relation
@@ -210,7 +211,7 @@ class CommentsModel(QSqlRelationalTableModel):
         """ "add new notes to table"""
         self._query.prepare(
             """
-            INSERT INTO comments (timestamp, topic_id, comment)
+            INSERT INTO notes (timestamp, topic_id, note)
             VALUES (?, ?, ?)
             """
         )
@@ -220,11 +221,11 @@ class CommentsModel(QSqlRelationalTableModel):
 
         if self._query.exec():
             self.select()
-            logger.info(f"Added comment related to topic at'{topic_id}'")
+            logger.info(f"Added note related to topic at'{topic_id}'")
             return True
         else:
             logger.error(
-                f"DB error adding comments: {self._query.lastError().driverText()}"
+                f"DB error adding notes: {self._query.lastError().driverText()}"
             )
             return False
 

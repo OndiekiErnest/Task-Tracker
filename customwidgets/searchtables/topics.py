@@ -67,6 +67,8 @@ class TopicsTableview(SearchableTable):
                             f"Topic error: setData: {model.lastError().text()}"
                         )
 
+                model.select()
+
     def disableDnCheck(self):
         """disable btns"""
         self.enabledtopic.setDisabled(True)

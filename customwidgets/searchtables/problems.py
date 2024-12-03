@@ -86,6 +86,8 @@ class ProblemsTableview(SearchableTable):
                             f"Problem error: setData: {model.lastError().text()}"
                         )
 
+                model.select()
+
     def _on_delete(self):
         """delete selected rows"""
         if selected := self.sRows():

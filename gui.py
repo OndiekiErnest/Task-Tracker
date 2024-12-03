@@ -8,10 +8,10 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 from PyQt6.QtGui import QIcon
-from models import CommentsModel, TopicsModel, ProblemsModel
+from models import NotesModel, TopicsModel, ProblemsModel
 from customwidgets.menus import NewTopicMenu, NewProblemMenu
 from screens.settings import SettingsWindow
-from screens.comments import CommentsWindow
+from screens.notes import NotesWindow
 from constants import APP_ICON, ENTRIES_ICON, SETTINGS_ICON
 
 
@@ -34,8 +34,8 @@ class MainWindow(QWidget):
         self.problem_menu = NewProblemMenu(self)
 
         # widgets
-        self.commentsview = CommentsWindow()
-        self.commentsview.table_group.new_topic.setMenu(self.topic_menu)
+        self.notesview = NotesWindow()
+        self.notesview.table_group.new_topic.setMenu(self.topic_menu)
 
         self.settingsview = SettingsWindow()
         self.settingsview.topic_options.new_topic.setMenu(self.topic_menu)
@@ -49,12 +49,12 @@ class MainWindow(QWidget):
         layout.addWidget(self.tabwidget)
 
         # add views to tab widget
-        self.tabwidget.addTab(self.commentsview, QIcon(ENTRIES_ICON), "Entries")
+        self.tabwidget.addTab(self.notesview, QIcon(ENTRIES_ICON), "Entries")
         self.tabwidget.addTab(self.settingsview, QIcon(SETTINGS_ICON), "Settings")
 
     def switchToEntries(self):
         """make entries the active tab"""
-        index = self.tabwidget.indexOf(self.commentsview)
+        index = self.tabwidget.indexOf(self.notesview)
         self.tabwidget.setCurrentIndex(index)
 
     def switchToSettings(self):
@@ -62,9 +62,9 @@ class MainWindow(QWidget):
         index = self.tabwidget.indexOf(self.settingsview)
         self.tabwidget.setCurrentIndex(index)
 
-    def setCommentsModel(self, model: CommentsModel):
+    def setNotesModel(self, model: NotesModel):
         """set database model"""
-        self.commentsview.setModel(model)
+        self.notesview.setModel(model)
 
     def setTopicsModel(self, model: TopicsModel):
         """set model for topics"""

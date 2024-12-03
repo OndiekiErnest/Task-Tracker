@@ -19,8 +19,8 @@ class Tableview(QTableView):
         self.set_column_widths()
 
 
-class CommentsTable(Tableview):
-    """table to display comment records"""
+class NotesTable(Tableview):
+    """table to display note records"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

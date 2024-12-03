@@ -1,25 +1,25 @@
-"""widget for showing comment records"""
+"""widget for showing note records"""
 
 import logging
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
 )
-from models import CommentsModel
-from customwidgets.searchtables import CommentsTableview
+from models import NotesModel
+from customwidgets.searchtables import NotesTableview
 
 logger = logging.getLogger(__name__)
 
 
-class CommentsWindow(QWidget):
-    """activity comments viewer window"""
+class NotesWindow(QWidget):
+    """activity notes viewer window"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         layout = QVBoxLayout(self)
 
-        self.table_group = CommentsTableview("Notes")
+        self.table_group = NotesTableview("Notes")
 
         layout.addWidget(self.table_group)
 
@@ -27,7 +27,7 @@ class CommentsWindow(QWidget):
         """return selected rows"""
         return self.table_group.sRows()
 
-    def setModel(self, model: CommentsModel):
+    def setModel(self, model: NotesModel):
         """set database model"""
         logger.info(f"Model set to '{model}'")
 

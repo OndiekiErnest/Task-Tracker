@@ -14,9 +14,9 @@ from PyQt6.QtCore import Qt, QRect, QModelIndex, QTime, QDateTime
 logger = logging.getLogger(__name__)
 
 
-class CommentsDelegate(QStyledItemDelegate):
+class NotesDelegate(QStyledItemDelegate):
     """
-    delegate for the comments table,
+    delegate for the notes table,
     uses: QPlainTextEdit and QDateTimeEdit for editing large texts and datetimes
     """
 
@@ -29,7 +29,7 @@ class CommentsDelegate(QStyledItemDelegate):
         # variables
         self.datetime_col = 1
         self.topic_col = 2
-        self.comment_col = 3
+        self.note_col = 3
         # topics
         self._topics = []
 
@@ -83,7 +83,7 @@ class CommentsDelegate(QStyledItemDelegate):
             editor = QDateTimeEdit(parent)
             editor.setDisplayFormat("yyyy-MM-dd HH:mm:ss")  # set time format
 
-        elif column == self.comment_col:
+        elif column == self.note_col:
             # Use QPlainTextEdit
             editor = QPlainTextEdit(parent)
             editor.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -109,7 +109,7 @@ class CommentsDelegate(QStyledItemDelegate):
             qdt = QDateTime.fromString(value, "yyyy-MM-dd HH:mm:ss")
             editor.setDateTime(qdt)
 
-        elif column == self.comment_col:
+        elif column == self.note_col:
             # set data for QPlainTextEdit
             editor.setPlainText(value)
 
@@ -132,7 +132,7 @@ class CommentsDelegate(QStyledItemDelegate):
             model.setData(index, datetime_str, Qt.ItemDataRole.EditRole)
             logger.info(f"Notes timestamp changed to: {datetime_str!r}")
 
-        elif column == self.comment_col:
+        elif column == self.note_col:
             # save data from QPlainTextEdit
             text = editor.toPlainText()
             model.setData(index, text, Qt.ItemDataRole.EditRole)
@@ -159,7 +159,7 @@ class CommentsDelegate(QStyledItemDelegate):
             )
             editor.setGeometry(rect)
 
-        elif column == self.comment_col:
+        elif column == self.note_col:
             rect = QRect(
                 option.rect.left(),
                 option.rect.top(),

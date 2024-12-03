@@ -7,8 +7,8 @@ from constants import ADD_ICON
 from .base import SearchableTable
 
 
-class CommentsTableview(SearchableTable):
-    """comments table viewer"""
+class NotesTableview(SearchableTable):
+    """notes table viewer"""
 
     def __init__(self, name: str, **kwargs):
         super().__init__(name, **kwargs)
@@ -22,12 +22,12 @@ class CommentsTableview(SearchableTable):
         self.new_topic = QPushButton("Topic")
         self.new_topic.setIcon(QIcon(ADD_ICON))
 
-        self.new_comment = QPushButton("Notes")
-        self.new_comment.setIcon(QIcon(ADD_ICON))
+        self.new_note = QPushButton("Notes")
+        self.new_note.setIcon(QIcon(ADD_ICON))
 
         # add extended btns
         self.btnslayout.addWidget(self.new_topic, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.btnslayout.addWidget(self.new_comment)
+        self.btnslayout.addWidget(self.new_note)
         # default btns/widgets
         self.btnslayout.addWidget(self.more_btn)
         self.btnslayout.addWidget(self.del_btn)

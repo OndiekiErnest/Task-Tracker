@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
 )
 from PyQt6.QtGui import QIcon
-from customwidgets.tableviews import CommentsTable, TopicsTable, ProblemsTable
+from customwidgets.tableviews import NotesTable, TopicsTable, ProblemsTable
 from customwidgets.lineedits import SearchInput
 from customwidgets.buttons import InOutButton
 from customwidgets.menus import TableMoreMenu
@@ -32,7 +32,7 @@ class SearchableTable(QGroupBox):
 
         # supported tables
         tables = {
-            "Notes": CommentsTable,
+            "Notes": NotesTable,
             "Topics": TopicsTable,
             "Problems": ProblemsTable,
         }

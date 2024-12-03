@@ -9,13 +9,13 @@ from PyQt6.QtSql import QSqlDatabase
 from PyQt6.QtGui import QIcon
 from humanize import naturaltime
 from gui import MainWindow
-from models import CommentsModel, TopicsModel, ProblemsModel
-from constants import APP_DB, APP_ICON, TIMEZONE, SOLVED_PLACEHOLDER
+from models import NotesModel, TopicsModel, ProblemsModel
 from customwidgets.menus import TrayMenu
-from customwidgets.delegates import CommentsDelegate, ProblemsDelegate
-from screens.comment_input import InputPopup
+from customwidgets.delegates import NotesDelegate, ProblemsDelegate
+from screens.note_input import InputPopup
 from datastructures.settings import settings
 from qstyles import STYLE
+from constants import APP_DB, APP_ICON, TIMEZONE, SOLVED_PLACEHOLDER
 
 
 logging.basicConfig(
@@ -58,7 +58,7 @@ class Tracker:
         self.input_window = InputPopup()
         self.input_window.setWindowIcon(self.app_icon)
         # link buttons
-        self.input_window.submit.clicked.connect(self.logComment)
+        self.input_window.submit.clicked.connect(self.logNote)
         self.input_window.prompt.linkActivated.connect(self.showAddTopic)
 
         self.notification_timer = QTimer(self.gui)
@@ -69,34 +69,35 @@ class Tracker:
         # models
         self.topics_model = TopicsModel(self.db)
         self.problems_model = ProblemsModel(self.db)
-        self.comments_model = CommentsModel(self.db)
+        self.notes_model = NotesModel(self.db)
 
         self.all_topics = self.topics_model.getTopics()
 
-        self.gui.setCommentsModel(self.comments_model)
+        self.gui.setNotesModel(self.notes_model)
         self.gui.setTopicsModel(self.topics_model)
         self.gui.setProblemsModel(self.problems_model)
 
-        self.comments_delegate = CommentsDelegate()
+        self.notes_delegate = NotesDelegate()
         self.problems_delegate = ProblemsDelegate()
 
-        self.gui.commentsview.table_group.setItemDelegate(self.comments_delegate)
+        self.gui.notesview.table_group.setItemDelegate(self.notes_delegate)
         self.gui.settingsview.problem_options.table_view.setItemDelegate(
             self.problems_delegate
         )
 
         self.topics_model.modelReset.connect(self.on_topics_changed)
         self.topics_model.dataChanged.connect(self.on_topics_changed)
-        # self.topics_model.layoutChanged.connect(self.on_data_changed)
+        # self.topics_model.layoutChanged.connect(self.on_topics_changed)
         self.topics_model.rowsRemoved.connect(self.on_topics_changed)
 
         self.topics_model.modelReset.connect(self.on_problems_changed)
         self.topics_model.dataChanged.connect(self.on_problems_changed)
+        # self.topics_model.layoutChanged.connect(self.on_problems_changed)
         self.topics_model.rowsRemoved.connect(self.on_problems_changed)
 
-        # comments viewer btns
-        self.gui.commentsview.table_group.new_comment.clicked.connect(self.showInputWin)
-        self.gui.commentsview.table_group.del_btn.clicked.connect(self.deleteComment)
+        # notes viewer btns
+        self.gui.notesview.table_group.new_note.clicked.connect(self.showInputWin)
+        self.gui.notesview.table_group.del_btn.clicked.connect(self.deleteNote)
         # settings
         self.gui.topic_menu.new_topic.addbtn.clicked.connect(self.saveTopic)
         self.gui.problem_menu.new_problem.addbtn.clicked.connect(self.from_problemenu)
@@ -162,7 +163,7 @@ class Tracker:
 
     def onStartup(self):
         """get things running right away"""
-        self.comments_delegate.setTopics(self.all_topics)
+        self.notes_delegate.setTopics(self.all_topics)
         self.problems_delegate.setTopics(self.all_topics)
         self._checkWeekend()
         self.onTimeout()
@@ -224,7 +225,7 @@ class Tracker:
         logger.info(f"showAddTopic called with: {args}")
         self.gui.showMaximized()
         self.gui.switchToEntries()
-        self.gui.commentsview.table_group.new_topic.click()
+        self.gui.notesview.table_group.new_topic.click()
 
     def showInputWin(self):
         """popup input window"""
@@ -266,25 +267,25 @@ class Tracker:
             problems = self.getUnsolvedProblems()
             self.input_window.setProblems(problems)
 
-    def logComment(self):
-        """add comment record to database"""
+    def logNote(self):
+        """add note record to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic_title = self.input_window.topics.child.currentText()
         topic_id = self._topicIDByTitle(topic_title)
-        comments = self.input_window.comments.child.toPlainText()
+        notes = self.input_window.notes.child.toPlainText()
 
         new_problem = self.input_window.problem.child.text()
         solved_problem = self.input_window.solved_problem.child.currentText()
 
         self.handle_problem(time_now, topic_id, new_problem, solved_problem)
 
-        if self.comments_model.newNote(time_now, topic_id, comments):
+        if self.notes_model.newNote(time_now, topic_id, notes):
             self.input_window.clear()
             self.input_window.hide()
 
-    def deleteComment(self):
-        """delete comment record from database"""
-        selected = self.gui.commentsview.sRows()
+    def deleteNote(self):
+        """delete note record from database"""
+        selected = self.gui.notesview.sRows()
         if selected:
             logs_len = len(selected)
             if self.gui.ask(
@@ -292,22 +293,22 @@ class Tracker:
             ):
                 for index in selected:
                     row = index.row()
-                    self.comments_model.deleteRowFromTable(row)
-                    logger.info(f"Activity at {row} deleted from 'comments' table")
+                    self.notes_model.deleteRowFromTable(row)
+                    logger.info(f"Activity at {row} deleted from 'notes' table")
 
                     # apply changes
-                self.comments_model.select()
-                self.gui.commentsview.table_group.del_btn.hide()
+                self.notes_model.select()
+                self.gui.notesview.table_group.del_btn.hide()
 
     def saveTopic(self):
         """set topic details in settings to database"""
         time_now = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
         topic = self.gui.topic_menu.getTopic()
-        start = self.gui.topic_menu.getStart()
+        starts = self.gui.topic_menu.getStart()
         ends = self.gui.topic_menu.getEnds()
         show_notifs = self.gui.topic_menu.showNotifications()
 
-        if self.topics_model.newTopic(time_now, topic, start, ends, show_notifs):
+        if self.topics_model.newTopic(time_now, topic, starts, ends, show_notifs):
             self.gui.topic_menu.on_done()
             # show changes right away
             self.onTimeout()
@@ -384,7 +385,7 @@ class Tracker:
             logger.info("Notifications enabled")
 
     def on_topics_changed(self, *args, **kwargs):
-        logger.info("Data changed in 'topics' model")
+        logger.info(f"Data changed in 'topics' model")
         self.all_topics = self.topics_model.getTopics()
 
         topics = self.getCurrentTopics()
@@ -392,15 +393,15 @@ class Tracker:
         self.setCurrentTopics(topics)
 
         # select to reflect any new changes
-        self.comments_model.select()
+        self.notes_model.select()
         self.problems_model.select()
 
-        self.comments_delegate.setTopics(self.all_topics)
+        self.notes_delegate.setTopics(self.all_topics)
         self.problems_delegate.setTopics(self.all_topics)
         self.gui.problem_menu.setTopics(self.all_topics, current=topics)
 
     def on_problems_changed(self, *args, **kwargs):
-        logger.info("Data changed in 'problems' model")
+        logger.info(f"Data changed in 'problems' model")
 
         problems = self.getUnsolvedProblems()
         self.input_window.setProblems(problems)
