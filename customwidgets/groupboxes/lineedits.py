@@ -28,9 +28,9 @@ class NamedLineEdit(NamedItem):
 
     def __init__(self, *args, **kwargs):
 
-        validator = WordCountValidator(7, parent=self)
-
         self.child = QLineEdit()
-        self.child.setValidator(validator)
 
         super().__init__(*args, **kwargs)
+
+        validator = WordCountValidator(7, parent=self)
+        self.child.setValidator(validator)
