@@ -84,8 +84,12 @@ class TopicsModel(QSqlTableModel):
 
     def getTopics(self):
         """prepare topics, and their details"""
+        # fetch all
+        while self.canFetchMore():
+            self.fetchMore()
         # get the number of rows
         row_count = self.rowCount()
+
         now_dt = datetime.now(tz=TIMEZONE)
 
         # create a list to store rows as tuples
@@ -293,6 +297,9 @@ class ProblemsModel(QSqlRelationalTableModel):
     def getProblems(self):
         """create problems data"""
 
+        # fetch all
+        while self.canFetchMore():
+            self.fetchMore()
         # get the number of rows
         row_count = self.rowCount()
 
