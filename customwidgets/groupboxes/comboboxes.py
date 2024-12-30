@@ -11,6 +11,7 @@ class NamedCombobox(NamedItem):
     def __init__(self, *args, **kwargs):
 
         self.child = QComboBox()
+        self.child.setMaxVisibleItems(15)
 
         super().__init__(*args, **kwargs)
 
@@ -19,6 +20,6 @@ class NamedCombobox(NamedItem):
         self.child.clear()
         self.child.addItems(topics)
 
-    def setCurrentTopic(self, title):
+    def setCurrentTopic(self, title: str):
         """set title as current text"""
         self.child.setCurrentText(title)
