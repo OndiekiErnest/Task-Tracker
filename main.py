@@ -14,6 +14,8 @@ from customwidgets.menus import TrayMenu
 from customwidgets.delegates import NotesDelegate, ProblemsDelegate
 from screens.note_input import InputPopup
 from datastructures.settings import settings
+from datastructures.datas import TopicData
+from utils import close_topic
 from qstyles import STYLE
 from constants import APP_DB, APP_ICON, TIMEZONE, SOLVED_PLACEHOLDER
 
@@ -188,24 +190,29 @@ class Tracker:
     def getCurrentTopics(self):
         """calculate the currrent topics based on the current time"""
         now = datetime.now(tz=TIMEZONE)
-        return [topic for topic in self.all_topics if topic.starts <= now <= topic.ends]
+        return [
+            topic for topic in self.all_topics if (topic.starts <= now <= topic.ends)
+        ]
 
     def getUnsolvedProblems(self):
         """get problems that not been solved"""
         all_problems = self.problems_model.getProblems()
         return [problem for problem in all_problems if not problem.solved]
 
-    def setCurrentTopics(self, current_topics: list):
+    def setCurrentTopics(
+        self,
+        current_topics: list[TopicData],
+        current_topic: TopicData | None,
+    ):
         """add current topics to the input window"""
         self.input_window.topics.addItems(t.title for t in current_topics)
+        if current_topic:
+            self.input_window.topics.setCurrentTopic(current_topic.title)
 
-    def setCurrentTRange(self, current_topics: list):
+    def setCurrentTRange(self, current_topic: TopicData | None):
         """set current time range on the tray menu"""
-        if current_topics:
-            min_dt, max_dt = (
-                min((t.starts for t in current_topics)),
-                max((t.ends for t in current_topics)),
-            )
+        if current_topic:
+            min_dt, max_dt = (current_topic.starts, current_topic.ends)
             dsp = f"<b>{min_dt.strftime('%a, %H:%M')} - {max_dt.strftime('%a, %H:%M')}</b>"
             end = f"  (ends about {naturaltime(max_dt)})"
         else:
@@ -340,31 +347,36 @@ class Tracker:
         show message
         """
         topics = self.getCurrentTopics()
-        self.gui.problem_menu.setTopics(self.all_topics, current=topics)
-        # if notifications are enabled
-        if self.show_notifications:
-            # if not all topics are enabled
-            disabled = not all((t.enabled for t in topics))
+        current_topic = close_topic(topics)
+
+        self.gui.problem_menu.setTopics(self.all_topics, current=current_topic)
+
+        if current_topic:
+            # if topic is disabled or notifications are disabled for the current day
+            # show_notifications is given priority
+            disabled = not (self.show_notifications or current_topic.enabled)
             # set disabled action checked
             self.tray_menu.disableactn.setChecked(disabled)
+        else:
+            self.tray_menu.disableactn.setChecked(False)
 
         problems = self.getUnsolvedProblems()
         self.input_window.setProblems(problems)
 
-        self.setCurrentTRange(topics)
-        self.setCurrentTopics(topics)
+        self.setCurrentTRange(current_topic)
+        self.setCurrentTopics(topics, current_topic)
 
-        self.showMessage(topics)
+        self.showMessage(current_topic)
 
-    def showMessage(self, current_topics: list):
+    def showMessage(self, current_topic: TopicData):
         """show log reminder"""
-        if self.input_window.isHidden() and current_topics and self.show_notifications:
-            tp_len = len(current_topics)
-            end = naturaltime(max((t.ends for t in current_topics)))
+        if self.input_window.isHidden() and current_topic and self.show_notifications:
+
+            end = naturaltime(current_topic.ends)
 
             self.tray_icon.showMessage(
-                "How is the topic going?",
-                f"Log your achievements. \n{tp_len} {'topics' if tp_len > 1 else 'topic'} ending {end}",
+                "Click to add Notes.",
+                f"{current_topic.title} ends {end}",
                 self.app_icon,
                 # msecs=10000,
             )
@@ -389,8 +401,10 @@ class Tracker:
         self.all_topics = self.topics_model.getTopics()
 
         topics = self.getCurrentTopics()
-        self.setCurrentTRange(topics)
-        self.setCurrentTopics(topics)
+        current_topic = close_topic(topics)
+
+        self.setCurrentTRange(current_topic)
+        self.setCurrentTopics(topics, current_topic)
 
         # select to reflect any new changes
         self.notes_model.select()
@@ -398,7 +412,7 @@ class Tracker:
 
         self.notes_delegate.setTopics(self.all_topics)
         self.problems_delegate.setTopics(self.all_topics)
-        self.gui.problem_menu.setTopics(self.all_topics, current=topics)
+        self.gui.problem_menu.setTopics(self.all_topics, current=current_topic)
 
     def on_problems_changed(self, *args, **kwargs):
         logger.info(f"Data changed in 'problems' model")
