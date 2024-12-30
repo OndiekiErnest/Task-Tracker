@@ -4,9 +4,31 @@ import os
 import ctypes
 import orjson
 import logging
+from datetime import datetime
 from subprocess import run as subrun
+from datastructures.datas import TopicData
+from constants import TIMEZONE
 
 logger = logging.getLogger(__name__)
+
+
+def diff_key(now: datetime):
+    """return the difference between now and the 'starts' datetime of a topic"""
+
+    def wrapper(topic: TopicData):
+        return abs(now - topic.starts)
+
+    return wrapper
+
+
+def close_topic(topics: list[TopicData]):
+    """return the closest topic whose 'starts' datetime is close to now"""
+    if not topics:
+        return None
+
+    now = datetime.now(tz=TIMEZONE)
+    current_topic = min(topics, key=diff_key(now))
+    return current_topic
 
 
 def hidePath(path: str):
