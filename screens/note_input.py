@@ -119,16 +119,15 @@ class InputPopup(QWidget):
 
     def hide(self):
         self.slide_out()
-
         self.animation.finished.connect(self._hide_screen)
 
     def showNormal(self):
-        super().showNormal()
         self.slide_in()
+        super().showNormal()
 
     def show(self):
-        super().show()
         self.slide_in()
+        super().show()
 
     def _hide_screen(self):
         super().hide()
