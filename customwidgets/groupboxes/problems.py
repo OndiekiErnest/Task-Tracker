@@ -48,9 +48,8 @@ class NewProblem(QGroupBox):
         else:
             self.addbtn.setDisabled(True)
 
-    def setTopics(self, topics, current: list = None):
+    def setTopics(self, topics, current=None):
         """add topics to drop-down menu"""
         self.topics.addItems(t.title for t in topics)
         if current:
-            title = current[0].title
-            self.topics.setCurrentTopic(title)
+            self.topics.setCurrentTopic(current.title)
