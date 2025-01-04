@@ -354,7 +354,7 @@ class Tracker:
         if current_topic:
             # if topic is disabled or notifications are disabled for the current day
             # show_notifications is given priority
-            disabled = not (self.show_notifications or current_topic.enabled)
+            disabled = (not self.show_notifications) or (not current_topic.enabled)
             # set disabled action checked
             self.tray_menu.disableactn.setChecked(disabled)
         else:
